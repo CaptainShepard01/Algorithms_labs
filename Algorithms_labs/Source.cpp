@@ -20,6 +20,27 @@ void removeIntFromTheTop(const char* filename, const int N);
 bool isEmptyFile(const char* filename);
 const char* fileMerge(std::vector<char*> filenames, const int& chunkSize, const int& total_chunks);
 
+std::vector<int> readBinaryFile(const char* filename) {
+	FILE* file;
+
+	std::vector<int> result;
+
+	fopen_s(&file, filename, "rb");
+
+	if (file == nullptr)
+		throw std::runtime_error("");
+
+	int tempNumber = 0;
+
+	while (fread_s(&tempNumber, sizeof(int), sizeof(int), 1, file)) {
+		result.push_back(tempNumber);
+	}
+
+	if (file)
+		fclose(file);
+
+	return result;
+}
 
 //void initialize(int& numbersAmount, int& RAM, int& filesAmount) {
 //	std::cout << "Numbers amount : ";
@@ -326,7 +347,7 @@ int main() {
 	hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	
 	_chdir("E:\\Visual studio\\Algorithms_labs\\Algorithms_labs\\Files");
-	SetConsoleTextAttribute(hConsole, 2);
+	SetConsoleTextAttribute(hConsole, 15);
 	
 	int total_chunks = 0;
 	
@@ -335,6 +356,9 @@ int main() {
 	
 	initialize(elementsCount, maxRAM, fileCount, low, high);
 	randomizer(filename, elementsCount, low, high);
+
+	std::vector<int> expected_output = readBinaryFile(filename);
+	std::sort(expected_output.begin(), expected_output.end());
 	
 	std::pair<std::vector<int>, int> my_pair = chunkNumberDeterminer(fileCount, elementsCount, maxRAM, total_chunks);
 	vector<int> chunks = my_pair.first;
@@ -343,8 +367,14 @@ int main() {
 	
 	vector<char*> filenames = chunkSeparator(filename, realChunkSize, chunks);
 	
+	std::vector<int> real_output = readBinaryFile(fileMerge(filenames, realChunkSize, total_chunks));
+
 	printBinaryFile(fileMerge(filenames, realChunkSize, total_chunks));
 
+	if (real_output == expected_output) {
+		std::cout << "\nSuccessful sort!\n\n";
+	}
+	else std::cout << "\nError!\n\n";
 	//int numbersAmount = 200, RAM = 10, filesAmount = 6;
 	////initialize(numbersAmount, RAM, filesAmount);
 	//const char* filename = getMixedFile(numbersAmount);
@@ -370,32 +400,54 @@ int main() {
 	//
 	////printBinaryFile(fileMerge(filenames));
 
-
 	return 0;
 }
 
 
 void printBinaryFile(const char* filename) {
+	HANDLE  hConsole;
+	hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleTextAttribute(hConsole, 15);
 	int x;
+	int counter = 0;
 	FILE* file;
 	if (isEmptyFile(filename)) {
 		std::cout << "\nEmpty file!\n\n";
 		return;
 	}
 	fopen_s(&file, filename, "rb");
-	while (fread_s(&x, sizeof(int), sizeof(int), 1, file))
+	while (fread_s(&x, sizeof(int), sizeof(int), 1, file)) {
 		std::cout << x << ' ';
-	std::cout << "\nEnd of file!\n\n";
+		++counter;
+	}
+	std::cout << "\n\nEnd of file!\n\nThere are "<<counter<<" integers.\n";
 	fclose(file);
 }
 
 void initialize(int& numb, int& maxRAM, int& fileCount, int& low, int& high) {
-	std::cout << "Number of integers: ";
-	std::cin >> numb;
-	std::cout << "MaxRAM: ";
-	std::cin >> maxRAM;
-	std::cout << "Number of files: ";
-	std::cin >> fileCount;
+	do {
+		std::cout << "Number of integers: ";
+		std::cin >> numb;
+		if (numb <= 0) {
+			std::cout << "Must be positive!\n";
+			system("pause");
+			system("cls");
+		}
+	} while (numb <= 0);
+	do {
+		std::cout << "MaxRAM: ";
+		std::cin >> maxRAM;
+		if (maxRAM <= 1) {
+			std::cout << "Must be at least 1!\n";
+		}
+	} while (maxRAM <= 1);
+	do {
+		std::cout << "Number of files: ";
+		std::cin >> fileCount;
+		if (fileCount <= 3) {
+			std::cout << "Must be at least 3!\n";
+		}
+	} while (fileCount <= 3);
 	std::cout << "Enter lower border set of numbers: ";
 	std::cin >> low;
 	std::cout << "Enter upper border set of numbers: ";
