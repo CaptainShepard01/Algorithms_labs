@@ -13,8 +13,8 @@
 using namespace std;
 
 void printBinaryFile(const char* filename);
-void initialize(int& numb, int& maxRAM, int& fileCount, int& low, int& high);
-void randomizer(const char* filename, int count, const int low, const int high);
+void initialize(int& numb, int& maxRAM, int& fileCount);
+void randomizer(const char* filename, int count);
 std::pair<std::vector<int>, int> chunkNumberDeterminer(const int& fileCount, const int& elementsCount, const int& maxRAM, int& total_chunks);
 std::vector<char*> chunkSeparator(const char* filename, const int& chunkSize, const std::vector<int>& chunks);
 void removeIntFromTheTop(const char* filename, const int N);
@@ -46,27 +46,28 @@ std::vector<int> readBinaryFile(const char* filename) {
 	return result;
 }
 
-int main() {
+int main() {	
 	HANDLE  hConsole;
 	int k;
 	hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleTextAttribute(hConsole, 15);
 
-	//_chdir("E:\\Visual studio\\Algorithms_labs\\Algorithms_labs\\Files");
+	//SetConsoleTextAttribute(hConsole, 0);
 
 	if (_chdir(".\\Files") == -1) {
 		if (_mkdir(".\\Files") == 0)
 			_chdir(".\\Files");
 	}
-	
-	SetConsoleTextAttribute(hConsole, 15);
 
 	int total_chunks = 0;
-
-	int elementsCount = 3000, maxRAM = 10, fileCount = 15, low = -400, high = 400;
+	int elementsCount = 0, maxRAM = 0, fileCount = 0;
 	const char* filename = { "Input" };
 
-	initialize(elementsCount, maxRAM, fileCount, low, high);
-	randomizer(filename, elementsCount, low, high);
+	initialize(elementsCount, maxRAM, fileCount);
+	randomizer(filename, elementsCount);
+
+	printBinaryFile(filename);
+	system("pause");
 
 	std::vector<int> expected_output = readBinaryFile(filename);
 	std::sort(expected_output.begin(), expected_output.end());
@@ -105,14 +106,14 @@ void printBinaryFile(const char* filename) {
 	}
 	fopen_s(&file, filename, "rb");
 	while (fread_s(&x, sizeof(int), sizeof(int), 1, file)) {
-		std::cout << setw(4) << x << ' ';
+		std::cout << setw(5) << x << ' ';
 		++counter;
 	}
 	std::cout << "\nEnd of file!\n\nThere are " << counter << " integers.\n";
 	fclose(file);
 }
 
-void initialize(int& numb, int& maxRAM, int& fileCount, int& low, int& high) {
+void initialize(int& numb, int& maxRAM, int& fileCount) {
 	do {
 		std::cout << "Number of integers: ";
 		std::cin >> numb;
@@ -136,22 +137,22 @@ void initialize(int& numb, int& maxRAM, int& fileCount, int& low, int& high) {
 			std::cout << "Must be at least 3!\n";
 		}
 	} while (fileCount <= 3);
-	std::cout << "Enter lower border set of numbers: ";
+	/*std::cout << "Enter lower border set of numbers: ";
 	std::cin >> low;
 	std::cout << "Enter upper border set of numbers: ";
-	std::cin >> high;
+	std::cin >> high;*/
 	return;
 }
 
-void randomizer(const char* filename, int count, const int low, const int high)
+void randomizer(const char* filename, int count)
 {
 	FILE* f;
 	fopen_s(&f, filename, "wb");
 	int* mas = new int[count];
-	int gap = high - low;
+	int gap = count;
 
 	for (int i = 0; i < count; ++i) {
-		mas[i] = rand() % gap + low;
+		mas[i] = rand() % gap - count/2;
 	}
 
 	fwrite(mas, sizeof(int), count, f);
@@ -344,6 +345,7 @@ void printAllBinaries(std::vector<char*> filenames, int outputIndex) {
 		std::cout << '\n';
 
 		printBinaryFile(filenames[i]);
+		std::cout << "\n";
 	}
 }
 
@@ -355,6 +357,7 @@ const char* fileMerge(std::vector<char*> filenames, const int& chunkSize, const 
 	std::vector<bool> chunkEnd(fileCount);         //end of chunk in certain file
 	std::vector<int> iters(fileCount);             //current numb of read int's from a certain file
 	std::vector<int> chunkSizes(fileCount);        //current chunk size for a certain file
+	std::vector<int> shifts(fileCount);
 
 	int chunks = 0;
 	double percentage = ((double)chunks / total_chunks) * 100;
@@ -377,6 +380,7 @@ const char* fileMerge(std::vector<char*> filenames, const int& chunkSize, const 
 		}
 
 		do {                //while not 1 empty file among others   
+			shifts.assign(fileCount, 0);
 			int chunk_numb = 0;
 			for (int i = 0; i < fileCount; ++i) {
 				if (i != out_ind) {
@@ -385,9 +389,7 @@ const char* fileMerge(std::vector<char*> filenames, const int& chunkSize, const 
 						fread_s(&container[i], sizeof(int), sizeof(int), 1, files[i]);
 						fclose(files[i]);
 						iters[i]++;
-						removeIntFromTheTop(filenames[i], 1);
-
-
+						shifts[i]++;
 					}
 					else {
 						container[i] = INT_MAX;
@@ -405,6 +407,9 @@ const char* fileMerge(std::vector<char*> filenames, const int& chunkSize, const 
 			while (true) {                                         //while not read 1 chunk from each file                                           
 				int min = minIndex(container, out_ind);
 
+				/*system("cls");
+				printAllBinaries(filenames, out_ind);*/
+
 				fopen_s(&files[min], filenames[min], "rb");
 				fopen_s(&files[out_ind], filenames[out_ind], "ab");
 
@@ -412,15 +417,17 @@ const char* fileMerge(std::vector<char*> filenames, const int& chunkSize, const 
 				iters[out_ind]++;
 
 				if (!chunkEnd[min]) {
+					fseek(files[min], shifts[min] * sizeof(int), SEEK_SET);
 					if (fread_s(&container[min], sizeof(int), sizeof(int), 1, files[min]) != 0) {
 						fclose(files[min]);
-						removeIntFromTheTop(filenames[min], 1);
+						shifts[min]++;
 
 						iters[min]++;
 					}
 					else {
 						container[min] = INT_MAX;
 						chunkEnd[min] = 1;
+						
 						chunk_numb++;
 
 						chunks++;
@@ -431,6 +438,7 @@ const char* fileMerge(std::vector<char*> filenames, const int& chunkSize, const 
 				}
 				else {
 					container[min] = INT_MAX;
+					
 					chunk_numb++;
 					system("cls");
 
@@ -449,6 +457,13 @@ const char* fileMerge(std::vector<char*> filenames, const int& chunkSize, const 
 					break;
 
 			}
+			for (int i = 0; i < fileCount; ++i) {
+				if (i != out_ind) {
+					removeIntFromTheTop(filenames[i], shifts[i]);
+					shifts[i] = 0;
+				}
+			}
+
 			for (int i = 0; i < fileCount; ++i) {
 				if (i != out_ind) {
 					chunkEnd[i] = 0;
