@@ -81,7 +81,7 @@ int main() {
 
 	std::vector<int> real_output = readBinaryFile(fileMerge(filenames, realChunkSize, total_chunks));
 
-	printBinaryFile(fileMerge_alt(filenames, realChunkSize, total_chunks));
+	printBinaryFile(fileMerge(filenames, realChunkSize, total_chunks));
 
 	if (real_output == expected_output) {
 		std::cout << "\nSuccessful sort!\n\n";
