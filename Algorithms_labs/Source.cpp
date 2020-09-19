@@ -132,7 +132,7 @@ void initialize(int& numb, int& maxRAM, int& fileCount) {
 		system("cls");
 		std::cout << "MaxRAM: ";
 		std::cin >> maxRAM;
-		if (maxRAM <= 1) {
+		if (maxRAM < 1) {
 			std::cout << "Must be at least 1!\n";
 			system("pause");
 		}
