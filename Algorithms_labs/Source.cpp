@@ -240,7 +240,6 @@ std::vector<char*> chunkSeparator(const char* filename, const int& chunkSize, co
 	return filenames;
 }
 
-//TO DO: optimize this function (removeIntFromTheTop)
 void removeIntFromTheTop(const char* filename, const int N) {
 
 	FILE* file;
@@ -284,7 +283,7 @@ bool isEmptyFile(const char* filename) {
 	return 0;
 }
 
-int minIndex(const vector<int> input, int output_ind) {
+int minIndex(const vector<int> input, const int output_ind) {
 	int min = 0;
 	for (int i = 0; i < input.size(); ++i) {
 		if (i != output_ind && input[i] < input[min])
