@@ -53,14 +53,14 @@ int main() {
 	SetConsoleTextAttribute(hConsole, 15);
 
 	//SetConsoleTextAttribute(hConsole, 0);
-
+	
 	if (_chdir(".\\Files") == -1) {
 		if (_mkdir(".\\Files") == 0)
 			_chdir(".\\Files");
 	}
 
 	int total_chunks = 0;
-	int elementsCount = 0, maxRAM = 0, fileCount = 0;
+	int elementsCount = 500, maxRAM = 10, fileCount = 15;
 	const char* filename = { "Input" };
 
 	initialize(elementsCount, maxRAM, fileCount);
@@ -87,6 +87,13 @@ int main() {
 		std::cout << "\nSuccessful sort!\n\n";
 	}
 	else std::cout << "\nError!\n\n";
+	
+	for (int i = 0; i < filenames.size(); ++i) {
+		if (isEmptyFile(filenames[i]))
+			remove(filenames[i]);
+	}
+	
+
 	system("pause");
 
 	return 0;
@@ -115,26 +122,30 @@ void printBinaryFile(const char* filename) {
 
 void initialize(int& numb, int& maxRAM, int& fileCount) {
 	do {
+		system("cls");
 		std::cout << "Number of integers: ";
 		std::cin >> numb;
 		if (numb <= 0) {
 			std::cout << "Must be positive!\n";
 			system("pause");
-			system("cls");
 		}
 	} while (numb <= 0);
 	do {
+		system("cls");
 		std::cout << "MaxRAM: ";
 		std::cin >> maxRAM;
 		if (maxRAM <= 1) {
 			std::cout << "Must be at least 1!\n";
+			system("pause");
 		}
 	} while (maxRAM <= 1);
 	do {
+		system("cls");
 		std::cout << "Number of files: ";
 		std::cin >> fileCount;
 		if (fileCount <= 3) {
 			std::cout << "Must be at least 3!\n";
+			system("pause");
 		}
 	} while (fileCount <= 3);
 	/*std::cout << "Enter lower border set of numbers: ";
@@ -199,8 +210,10 @@ std::vector<char*> chunkSeparator(const char* filename, const int& chunkSize, co
 
 	for (size_t i = 0, n = filenames.size(); i < n; i++) {
 		filenames[i] = new char[100];
+		//char temp[5] = {};
+		//filenames.push_back(_itoa_s(i, temp, 10));
 		//filenames[i] = (char*)"E:\\Visual studio\\Algorithms_labs\\Algorithms_labs\\Files";
-		char temp[] = { (char)'A' + i, '\0' }; // filename: "i"
+		char temp[] = { (char)'A' + i, '\0' };            // filename: "i"
 		strcpy_s(filenames[i], sizeof(filenames[i]), temp);
 	}
 
@@ -212,7 +225,7 @@ std::vector<char*> chunkSeparator(const char* filename, const int& chunkSize, co
 		for (int j = 0, m = chunks[i]; origin && tempFile && j < m; j++) {
 			size = fread(memory, sizeof(int), chunkSize, origin);
 
-			//ShakerSort(memory, size);
+		    //ShakerSort(memory, size);
 			std::sort(memory, memory + size);
 
 			fwrite(memory, sizeof(int), size, tempFile);
