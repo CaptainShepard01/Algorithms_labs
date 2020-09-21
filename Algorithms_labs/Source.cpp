@@ -351,14 +351,11 @@ void copyFile(const char* result, const char* source) {
 	fclose(output);
 }
 
-void mergeOneChunk(std::vector<FILE*>& files, std::vector<int>& container, std::vector<bool>& chunkEnd,
+void mergeOneChunk(std::vector<FILE*>& files, std::vector<int>& container,
 	std::vector<int>& iters, std::vector<int>& chunkSizes, const int& out_ind, std::vector<char*> filenames,
 	const int& total_chunks, int& chunks, double& percentage, int& chunk_numb, const int& fileCount) {
 	while (true) {                                         //while not read 1 chunk from each file                                           
 		int min = minIndex(container, out_ind);
-
-		/*system("cls");
-		printAllBinaries(filenames, out_ind);*/
 
 		fopen_s(&files[min], filenames[min], "rb");
 		fopen_s(&files[out_ind], filenames[out_ind], "ab");
@@ -366,7 +363,7 @@ void mergeOneChunk(std::vector<FILE*>& files, std::vector<int>& container, std::
 		fwrite(&container[min], sizeof(int), 1, files[out_ind]);
 		iters[out_ind]++;
 
-		if (!chunkEnd[min]) {
+		if (iters[min] < chunkSizes[min]) {
 			fseek(files[min], iters[min] * sizeof(int), SEEK_SET);
 			if (fread_s(&container[min], sizeof(int), sizeof(int), 1, files[min]) != 0) {
 				fclose(files[min]);
@@ -375,8 +372,7 @@ void mergeOneChunk(std::vector<FILE*>& files, std::vector<int>& container, std::
 			}
 			else {
 				container[min] = INT_MAX;
-				chunkEnd[min] = 1;
-
+				iters[min]++;
 				chunk_numb++;
 
 				chunks++;
@@ -399,16 +395,13 @@ void mergeOneChunk(std::vector<FILE*>& files, std::vector<int>& container, std::
 		fclose(files[min]);
 		fclose(files[out_ind]);
 
-		if (iters[min] >= chunkSizes[min])
-			chunkEnd[min] = 1;
-
 		if (chunk_numb == fileCount - 1)
 			break;
 
 	}
 }
 
-void mergeTillOneEmpty(const int& fileCount, std::vector<FILE*>& files, std::vector<int>& container, std::vector<bool>& chunkEnd,
+void mergeTillOneEmpty(const int& fileCount, std::vector<FILE*>& files, std::vector<int>& container,
 	std::vector<int>& iters, std::vector<int>& chunkSizes, const int& out_ind, bool& is_outputChunk_set,
 	std::vector<char*> filenames, const int& chunkSize, const int& total_chunks, int& chunks, double& percentage) {
 	do {                //while not 1 empty file among others   
@@ -433,12 +426,11 @@ void mergeTillOneEmpty(const int& fileCount, std::vector<FILE*>& files, std::vec
 			}
 		}
 
-		mergeOneChunk(files, container, chunkEnd, iters, chunkSizes, out_ind, filenames, total_chunks, chunks, percentage, chunk_numb, fileCount);
+		mergeOneChunk(files, container, iters, chunkSizes, out_ind, filenames, total_chunks, chunks, percentage, chunk_numb, fileCount);
 
 		for (int i = 0; i < fileCount; ++i) {
 			if (i != out_ind) {
 				removeIntFromTheTop(filenames[i], iters[i]);
-				chunkEnd[i] = 0;
 				iters[i] = 0;
 			}
 		}
@@ -457,7 +449,6 @@ const char* fileMerge(std::vector<char*> filenames, const int& chunkSize, const 
 
 	std::vector<FILE*> files(fileCount);           //files
 	std::vector<int> container(fileCount);         //vector of int
-	std::vector<bool> chunkEnd(fileCount);         //end of chunk in certain file
 	std::vector<int> iters(fileCount);             //current numb of read int's from a certain file
 	std::vector<int> chunkSizes(fileCount);        //current chunk size for a certain file
 
@@ -475,13 +466,12 @@ const char* fileMerge(std::vector<char*> filenames, const int& chunkSize, const 
 			if (isEmptyFile(filenames[i])) {
 				out_ind = i;
 				iters[out_ind] = 0;
-				chunkEnd[out_ind] = 0;
 				chunkSizes[out_ind] = 0;
 				break;
 			}
 		}
 
-		mergeTillOneEmpty(fileCount, files, container, chunkEnd, iters, chunkSizes, out_ind, is_outputChunk_set, filenames, chunkSize, total_chunks, chunks, percentage);
+		mergeTillOneEmpty(fileCount, files, container, iters, chunkSizes, out_ind, is_outputChunk_set, filenames, chunkSize, total_chunks, chunks, percentage);
 
 	}
 	system("cls");
