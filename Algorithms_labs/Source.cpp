@@ -20,7 +20,6 @@ std::vector<char*> chunkSeparator(const char* filename, const int& chunkSize, co
 void removeIntFromTheTop(const char* filename, const int N);
 bool isEmptyFile(const char* filename);
 const char* fileMerge(std::vector<char*> filenames, const int& chunkSize, const int& total_chunks);
-const char* fileMerge_1(std::vector<char*> filenames, const int& chunkSize, const int& total_chunks);
 
 std::vector<int> readBinaryFile(const char* filename) {
 	FILE* file;
@@ -64,8 +63,8 @@ int main() {
 	initialize(elementsCount, maxRAM, fileCount);
 	randomizer(filename, elementsCount);
 
-	printBinaryFile(filename);
-	system("pause");
+	//printBinaryFile(filename);
+	//system("pause");
 
 	std::vector<int> expected_output = readBinaryFile(filename);
 	std::sort(expected_output.begin(), expected_output.end());
