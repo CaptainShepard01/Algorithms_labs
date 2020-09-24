@@ -20,9 +20,7 @@ std::vector<char*> chunkSeparator(const char* filename, const int& chunkSize, co
 void removeIntFromTheTop(const char* filename, const int N);
 bool isEmptyFile(const char* filename);
 const char* fileMerge(std::vector<char*> filenames, const int& chunkSize, const int& total_chunks);
-
-int minIndex_alt(const vector<char*> filenames, int output_ind);
-const char* fileMerge_alt(std::vector<char*> filenames, const int& chunkSize, const int& total_chunks);
+const char* fileMerge_1(std::vector<char*> filenames, const int& chunkSize, const int& total_chunks);
 
 std::vector<int> readBinaryFile(const char* filename) {
 	FILE* file;
@@ -81,7 +79,7 @@ int main() {
 
 	std::vector<int> real_output = readBinaryFile(fileMerge(filenames, realChunkSize, total_chunks));
 
-	printBinaryFile(fileMerge(filenames, realChunkSize, total_chunks));
+	printBinaryFile("Output");
 
 	if (real_output == expected_output) {
 		std::cout << "\nSuccessful sort!\n\n";
@@ -142,11 +140,11 @@ void initialize(int& numb, int& maxRAM, int& fileCount) {
 		system("cls");
 		std::cout << "Number of files: ";
 		std::cin >> fileCount;
-		if (fileCount <= 3) {
+		if (fileCount < 3) {
 			std::cout << "Must be at least 3!\n";
 			system("pause");
 		}
-	} while (fileCount <= 3);
+	} while (fileCount < 3);
 	/*std::cout << "Enter lower border set of numbers: ";
 	std::cin >> low;
 	std::cout << "Enter upper border set of numbers: ";
@@ -222,8 +220,9 @@ std::vector<char*> chunkSeparator(const char* filename, const int& chunkSize, co
 		for (int j = 0, m = chunks[i]; origin && tempFile && j < m; j++) {
 			size = fread(memory, sizeof(int), chunkSize, origin);
 
-			//ShakerSort(memory, size);
-			std::sort(memory, memory + size);
+			InsertSort(memory, size);
+
+			//std::sort(memory, memory + size);
 
 			fwrite(memory, sizeof(int), size, tempFile);
 		}
@@ -328,6 +327,10 @@ int nonEmptyFilesCount(vector<char*> filenames) {
 	return cnt;
 }
 
+int emptyFilesCount(const int nonEmpty, const int fileCount) {
+	return fileCount - nonEmpty;
+}
+
 void printAllBinaries(std::vector<char*> filenames, int outputIndex) {
 	for (int i = 0, n = filenames.size(); i < n; i++) {
 		std::cout << "[" << i << "]";
@@ -351,99 +354,6 @@ void copyFile(const char* result, const char* source) {
 	fclose(output);
 }
 
-void mergeOneChunk(std::vector<FILE*>& files, std::vector<int>& container,
-	std::vector<int>& iters, std::vector<int>& chunkSizes, const int& out_ind, std::vector<char*> filenames,
-	const int& total_chunks, int& chunks, double& percentage, int& chunk_numb, const int& fileCount) {
-	while (true) {                                         //while not read 1 chunk from each file                                           
-		int min = minIndex(container, out_ind);
-
-		fopen_s(&files[min], filenames[min], "rb");
-		fopen_s(&files[out_ind], filenames[out_ind], "ab");
-
-		fwrite(&container[min], sizeof(int), 1, files[out_ind]);
-		iters[out_ind]++;
-
-		if (iters[min] < chunkSizes[min]) {
-			fseek(files[min], iters[min] * sizeof(int), SEEK_SET);
-			if (fread_s(&container[min], sizeof(int), sizeof(int), 1, files[min]) != 0) {
-				fclose(files[min]);
-
-				iters[min]++;
-			}
-			else {
-				container[min] = INT_MAX;
-				iters[min]++;
-				chunk_numb++;
-
-				chunks++;
-				system("cls");
-				percentage = ((double)chunks / total_chunks) * 100;
-				printPercentage(percentage);
-			}
-		}
-		else {
-			container[min] = INT_MAX;
-
-			chunk_numb++;
-			system("cls");
-
-			chunks++;
-			percentage = ((double)chunks / total_chunks) * 100;
-			printPercentage(percentage);
-		}
-
-		fclose(files[min]);
-		fclose(files[out_ind]);
-
-		if (chunk_numb == fileCount - 1)
-			break;
-
-	}
-}
-
-void mergeTillOneEmpty(const int& fileCount, std::vector<FILE*>& files, std::vector<int>& container,
-	std::vector<int>& iters, std::vector<int>& chunkSizes, const int& out_ind, bool& is_outputChunk_set,
-	std::vector<char*> filenames, const int& chunkSize, const int& total_chunks, int& chunks, double& percentage) {
-	do {                //while not 1 empty file among others   
-		int chunk_numb = 0;
-		for (int i = 0; i < fileCount; ++i) {
-			if (i != out_ind) {
-				if (!isEmptyFile(filenames[i])) {
-					fopen_s(&files[i], filenames[i], "rb");
-					fread_s(&container[i], sizeof(int), sizeof(int), 1, files[i]);
-					fclose(files[i]);
-					iters[i]++;
-				}
-				else {
-					container[i] = INT_MAX;
-					chunk_numb++;
-					chunks++;
-				}
-			}
-
-			if (i == out_ind) {
-				container[i] = INT_MAX;
-			}
-		}
-
-		mergeOneChunk(files, container, iters, chunkSizes, out_ind, filenames, total_chunks, chunks, percentage, chunk_numb, fileCount);
-
-		for (int i = 0; i < fileCount; ++i) {
-			if (i != out_ind) {
-				removeIntFromTheTop(filenames[i], iters[i]);
-				iters[i] = 0;
-			}
-		}
-
-		if (!is_outputChunk_set) {
-			chunkSizes[out_ind] = iters[out_ind];
-			is_outputChunk_set = 1;
-		}
-		iters[out_ind] = 0;
-
-	} while (nonEmptyFilesCount(filenames) == fileCount);
-}
-
 const char* fileMerge(std::vector<char*> filenames, const int& chunkSize, const int& total_chunks) {
 	int fileCount = filenames.size(), outputIndex = 0;
 
@@ -459,7 +369,7 @@ const char* fileMerge(std::vector<char*> filenames, const int& chunkSize, const 
 		chunkSizes[i] = chunkSize;
 
 
-	while (nonEmptyFilesCount(filenames) != 1) {          //while not 1 file with sorted array
+	while (nonEmptyFilesCount(filenames) != 1) {       
 		int out_ind;
 		bool is_outputChunk_set = 0;
 		for (int i = 0; i < fileCount; ++i) {
@@ -471,7 +381,93 @@ const char* fileMerge(std::vector<char*> filenames, const int& chunkSize, const 
 			}
 		}
 
-		mergeTillOneEmpty(fileCount, files, container, iters, chunkSizes, out_ind, is_outputChunk_set, filenames, chunkSize, total_chunks, chunks, percentage);
+
+		do {        
+		int min = 0;
+		int chunk_numb = 0;
+			//system("cls");
+			//printAllBinaries(filenames, out_ind);
+
+			fopen_s(&files[out_ind], filenames[out_ind], "ab");
+			for (int i = 0; i < fileCount; ++i) {
+				if (i == out_ind) {
+					container[i] = INT_MAX;
+					continue;
+				}
+				if (!isEmptyFile(filenames[i])) {
+					fopen_s(&files[i], filenames[i], "rb");
+					fread_s(&container[i], sizeof(int), sizeof(int), 1, files[i]);
+					fclose(files[i]);
+					iters[i]++;
+				}
+				else {
+					container[i] = INT_MAX;
+					chunk_numb++;
+					chunks++;
+				}
+			}
+			while (true) {
+				min = minIndex(container, out_ind);
+				fopen_s(&files[min], filenames[min], "rb");
+
+
+
+				fwrite(&container[min], sizeof(int), 1, files[out_ind]);
+				iters[out_ind]++;
+
+				if (iters[min] < chunkSizes[min]) {
+					fseek(files[min], iters[min] * sizeof(int), SEEK_SET);
+					if (fread_s(&container[min], sizeof(int), sizeof(int), 1, files[min]) != 0) {
+						fclose(files[min]);
+
+						iters[min]++;
+					}
+					else {
+						container[min] = INT_MAX;
+						iters[min]++;
+						chunk_numb++;
+
+						chunks++;
+						system("cls");
+						percentage = ((double)chunks / total_chunks) * 100;
+						printPercentage(percentage);
+					}
+				}
+				else {
+					container[min] = INT_MAX;
+
+					chunk_numb++;
+					system("cls");
+
+					chunks++;
+					percentage = ((double)chunks / total_chunks) * 100;
+					printPercentage(percentage);
+				}
+
+				fclose(files[min]);
+
+
+				if (chunk_numb == fileCount - 1)
+					break;
+			}
+			fclose(files[out_ind]);
+
+
+			for (int i = 0; i < fileCount; ++i) {
+				if (i != out_ind) {
+					removeIntFromTheTop(filenames[i], iters[i]);
+					iters[i] = 0;
+				}
+			}
+
+			if (!is_outputChunk_set) {
+				chunkSizes[out_ind] = iters[out_ind];
+				is_outputChunk_set = 1;
+			}
+			iters[out_ind] = 0;
+
+		} while (nonEmptyFilesCount(filenames) == fileCount);
+
 
 	}
 	system("cls");
@@ -484,113 +480,3 @@ const char* fileMerge(std::vector<char*> filenames, const int& chunkSize, const 
 		}
 	}
 }
-
-
-
-//int minIndex_alt(const vector<char*> filenames, int output_ind) {
-//	int min = INT_MAX;
-//	int index = -1;
-//	FILE* file;
-//	for (int i = 0; i < filenames.size(); ++i) {
-//		int x;
-//		fopen_s(&file, filenames[i], "rb");
-//		if (fread(&x, sizeof(int), 1, file)) {
-//			if (x < min && i != output_ind) {
-//				min = x;
-//				index = i;
-//			}
-//		}
-//		fclose(file);
-//	}
-//	return index;
-//}
-//
-//const char* fileMerge_alt(std::vector<char*> filenames, const int& chunkSize, const int& total_chunks) {
-//	int fileCount = filenames.size(), outputIndex = 0;
-//
-//	std::vector<FILE*> files(fileCount);           //files
-//	std::vector<int> container(fileCount);         //vector of int
-//	std::vector<bool> chunkEnd(fileCount);         //end of chunk in certain file
-//	std::vector<int> iters(fileCount);             //current numb of read int's from a certain file
-//	std::vector<int> chunkSizes(fileCount);        //current chunk size for a certain file
-//
-//	int chunks = 0;
-//	double percentage = ((double)chunks / total_chunks) * 100;
-//
-//	for (int i = 0; i < fileCount; ++i)
-//		chunkSizes[i] = chunkSize;
-//
-//
-//	while (nonEmptyFilesCount(filenames) != 1) {          //while not 1 file with sorted array
-//		int out_ind;
-//
-//		do {                //while not 1 empty file among others   
-//			int chunk_numb = 0;
-//			for (int i = 0; i < fileCount; ++i) {
-//				if (isEmptyFile(filenames[i])) {
-//					out_ind = i;
-//					iters[out_ind] = 0;
-//					chunkEnd[out_ind] = 0;
-//					chunkSizes[out_ind] = 0;
-//					break;
-//				}
-//			}
-//
-//
-//
-//			while (true) {                                         //while not read 1 chunk from each file                                           
-//				int min = minIndex_alt(filenames, out_ind);
-//				if (min == -1) {
-//					break;
-//				}
-//
-//				fopen_s(&files[min], filenames[min], "rb");
-//				fopen_s(&files[out_ind], filenames[out_ind], "ab");
-//
-//				fread_s(&container, sizeof(int), sizeof(int), 1, files[min]);
-//
-//				fwrite(&container, sizeof(int), 1, files[out_ind]);
-//				iters[out_ind]++;
-//				iters[min]++;
-//
-//				fclose(files[min]);
-//				fclose(files[out_ind]);
-//
-//				removeIntFromTheTop(filenames[min], 1);
-//
-//
-//				if (iters[min] == chunkSizes[min]) {
-//					chunk_numb++;
-//
-//					chunks++;
-//					system("cls");
-//					percentage = ((double)chunks / total_chunks) * 100;
-//					printPercentage(percentage);
-//				}
-//
-//				if (chunk_numb == fileCount - 1) {
-//					break;
-//				}
-//
-//			}
-//			for (int i = 0; i < fileCount; ++i) {
-//				if (i != out_ind) {
-//					chunkEnd[i] = 0;
-//					iters[i] = 0;
-//				}
-//			}
-//
-//			chunkSizes[out_ind] = iters[out_ind];
-//			iters[out_ind] = 0;
-//		} while (nonEmptyFilesCount(filenames) == fileCount);
-//
-//	}
-//	system("cls");
-//	for (int i = 0; i < filenames.size(); ++i) {
-//		if (!isEmptyFile(filenames[i])) {
-//			/*printBinaryFile(filenames[i]);
-//			system("pause");*/
-//			return filenames[i];
-//		}
-//	}
-//}
