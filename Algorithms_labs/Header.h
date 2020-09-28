@@ -19,6 +19,6 @@ void randomizer(const char* filename, int count);
 std::pair<std::vector<int>, int> chunkNumberDeterminer(const int& fileCount, const int& elementsCount, const int& maxRAM, int& total_chunks);
 std::vector<char*> chunkSeparator(const char* filename, const int& chunkSize, const std::vector<int>& chunks, int temp);
 bool isEmptyFile(const char* filename);
-int fileMerge(std::vector<char*> filenames, const int& chunkSize, const int& total_chunks);
+int fileMerge(std::vector<char*> filenames, const int& chunkSize);
 void printAllBinaries(std::vector<char*> filenames, int outputIndex);
 int MergeSort_alt(std::vector <char*> names);

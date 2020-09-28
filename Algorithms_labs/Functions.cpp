@@ -216,7 +216,7 @@ void printAllBinaries(std::vector<char*> filenames, int outputIndex) {
 	}
 }
 
-int fileMerge(std::vector<char*> filenames, const int& chunkSize, const int& total_chunks) {
+int fileMerge(std::vector<char*> filenames, const int& chunkSize) {
 	double t = clock();
 
 	int fileCount = filenames.size(), outputIndex = 0;
@@ -225,9 +225,6 @@ int fileMerge(std::vector<char*> filenames, const int& chunkSize, const int& tot
 	std::vector<FILE*> files(fileCount);
 	std::vector<int> container(fileCount);
 	std::vector<bool> isChunk(fileCount);
-
-	int chunks = 0;
-	double percentage = ((double)chunks / total_chunks) * 100;
 
 	for (int i = 0; i < fileCount; ++i) {
 		if (isEmptyFile(filenames[i])) {
@@ -256,7 +253,7 @@ int fileMerge(std::vector<char*> filenames, const int& chunkSize, const int& tot
 			min = -1;
 
 			for (int i = 0; i < fileCount; ++i) {
-				if (i == outputIndex || isChunk[i] == true || container[i] == INT_MAX)
+				if (isChunk[i] == true || container[i] == INT_MAX || i == outputIndex)
 					continue;
 				if (min != -1) {
 					if (container[i] < container[min])

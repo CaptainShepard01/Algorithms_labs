@@ -40,10 +40,12 @@ int main() {
 
 	std::vector<char*> filenames = chunkSeparator(filename, realChunkSize, chunks, (elementsCount - realChunkSize * (my_pair.second)));
 
-	int res = fileMerge(filenames, realChunkSize, total_chunks);
+	int res = fileMerge(filenames, realChunkSize);
 	//int res = MergeSort_alt(filenames);
 	
 	std::vector<int> real_output = readBinaryFile(filenames[res]);
+
+	rename(filenames[res], "Output");
 
 	for (int i = 0; i < filenames.size(); ++i) {
 		if (i == res)
