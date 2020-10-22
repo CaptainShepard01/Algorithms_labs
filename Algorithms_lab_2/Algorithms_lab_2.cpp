@@ -4,8 +4,16 @@
 #include <random>      
 #include <chrono>       
 
-int Partition(int* mas, int beg, int end) {
-	int x = mas[end];
+int Partition(int* mas, int beg, int end, int checker) {
+	int x = checker;
+	for (int i = 0; i <= end; ++i) {
+		if (mas[i] == checker) {
+			int tmp = mas[i];
+			mas[i] = mas[end];
+			mas[end] = tmp;
+		}
+	}
+
 	int i = beg-1;
 	int tmp = 0;
 	for (int j = beg; j < end; ++j) {
@@ -24,10 +32,11 @@ int Partition(int* mas, int beg, int end) {
 
 void QuickSortDouble_alt(int* mas_1, int* mas_2, int beg, int end) {
 	int tmp = mas_2[end];
-
+	int tmp_1 = 0;
 	if (beg < end) {
 		for (int i = beg; i < end; ++i) {
 			if (mas_1[i] == tmp) {
+				tmp_1=mas_1[i];
 				int t = mas_1[end];
 				mas_1[end] = mas_1[i];
 				mas_1[i] = t;
@@ -35,8 +44,8 @@ void QuickSortDouble_alt(int* mas_1, int* mas_2, int beg, int end) {
 			}
 		}
 
-		int iter = Partition(mas_1, beg, end);
-		Partition(mas_2, beg, end);
+		int iter = Partition(mas_1, beg, end, tmp);
+		Partition(mas_2, beg, end, tmp_1);
 		QuickSortDouble_alt(mas_1, mas_2, beg, iter - 1);
 		QuickSortDouble_alt(mas_1, mas_2, iter + 1, end);
 	}
@@ -141,7 +150,17 @@ int main()
 	//	std::cout << mas_2[i] << ' ';
 	//std::cout << "\n\n";
 
-	QuickSortDouble_alt(mas_1, mas_2, 0, n - 1);
+	int chosen = 0;
+	
+	std::cout << "\nWhich sort to choose:\n1 --> With partition.\n2 --> Without partition.\n";
+	std::cin >> chosen;
+	switch (chosen) {
+	case 1:QuickSortDouble_alt(mas_1, mas_2, 0, n - 1);
+		break;
+	case 2:QuickSortDouble(mas_1, mas_2, 0, n - 1);
+		break;
+	}
+	
 	
 	for (int i = 0; i < n; ++i) {
 		sort_1.push_back(mas_1[i]);
