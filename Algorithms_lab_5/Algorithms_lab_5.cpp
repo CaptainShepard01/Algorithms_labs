@@ -11,57 +11,79 @@
 #include <chrono>
 
 template<typename T>
-bool is_line_empty(T* line, int length) {
-	for (int i = 0; i < length; ++i) {
-		if (line[i] != 0)
-			return false;
-	}
-	return true;
-}
-
-template<typename T>
-struct is_bool
+struct is_bool_is_char
 	: public std::disjunction<
 	std::is_same<bool, typename std::decay<T>::type>,
 	std::is_same<char, typename std::decay<T>::type>
 	>
-{
-};
+{};
 
-template<typename T,
-	std::enable_if_t<std::is_arithmetic<T>::value, bool> = true
+template<
+	typename T,
+	typename = typename std::enable_if<std::is_arithmetic<T>::value && !is_bool_is_char<T>::value, T>::type
 >
 class Matrix {
 private:
+	std::vector<std::vector<T>> data;
 	int row;
-	T** data;
+	int column;
 	int old_row;
+	int old_column;
 public:
-	Matrix(int row = 0, T** data = {}) :row(row), data(data), old_row(row) {};
+	Matrix(std::vector<std::vector<T>> data = {}, int row = 0, int column = 0) :row(row), data(data), old_row(row), column(column), old_column(column) {};
 
-	void create_Matrix(int row) {
+	bool is_row_empty(int index_row) {
+		for (int i = 0; i < column; ++i) {
+			if (data[index_row][i] != 0)
+				return false;
+		}
+		return true;
+	}
+
+	bool is_column_empty(int index_column) {
+		for (int i = 0; i < row; ++i) {
+			if (data[i][index_column] != 0)
+				return false;
+		}
+		return true;
+	}
+
+	void delete_row() {
+		data.pop_back();
+		row--;
+	}
+
+	void delete_column() {
+		for (int i = 0; i < row; ++i) {
+			data[i].pop_back();
+		}
+		column--;
+	}
+
+	void create_Matrix(int row, int column) {
 		std::random_device rd;
 		std::mt19937 mt(rd());
-		std::uniform_real_distribution<double> dist(0.0, 10.0);
+		std::uniform_real_distribution<double> dist(0.0, 100.0);
 
 		this->row = row;
+		this->column = column;
 
-		int** res = new int* [row];
+		std::vector<std::vector<T>> res(row);
 		for (int i = 0; i < row; ++i) {
-			res[i] = new int[row];
-			for (int j = 0; j < row; ++j) {
+			res[i].resize(column);
+			for (int j = 0; j < column; ++j) {
 				res[i][j] = int(dist(mt));
 			}
 		}
 
 		data = res;
-		this->row = row;
 		old_row = row;
+		old_column = column;
 	}
 
 	void print() {
-		for (int i = 0; i < old_row; ++i) {
-			for (int j = 0; j < old_row; ++j) {
+		for (int i = 0; i < row; ++i) {
+			for (int j = 0; j < column; ++j) {
 				std::cout << std::setw(4) << data[i][j] << ' ';
 			}
 			std::cout << '\n';
@@ -69,27 +91,30 @@ public:
 		std::cout << "\n";
 	}
 
+	void setRow(int row) {
+		this->row = row;
+	}
+
+	void setColumn(int column) {
+		this->column = column;
+	}
+
 	void dim_Adjuster() {
-		int new_dim = row;
-		for (int i = 0; i < row; ++i) {
-			if (is_line_empty(data[i], row)) {
-				new_dim = i;
+		for (int i = row - 1; i >= 0; --i) {
+			if (is_row_empty(i)) {
+				delete_row();
+			}
+			else 
 				break;
-			}
 		}
 
-
-		T** res = new T * [new_dim];
-		for (int i = 0; i < new_dim; ++i) {
-			res[i] = new T[new_dim];
-			for (int j = 0; j < new_dim; ++j) {
-				res[i][j] = data[i][j];
+		for (int i = column - 1; i >= 0; --i) {
+			if (is_column_empty(i)) {
+				delete_column();
 			}
+			else
+				break;
 		}
-
-		data = res;
-		row = new_dim;
-		old_row = new_dim;
 	}
 
 	void additioning() {
@@ -97,22 +122,24 @@ public:
 
 		while (true) {
 			temp *= 2;
-			if (temp > row)
-				break;
-			else if (temp == row) {
+			if (temp > row) {
+				if (temp > column)
+					break;
+			}
+			else if (temp == row && temp == column) {
 				return;
 			}
 		}
 
 		int new_row = temp;
-		temp = temp - row;
+		//temp = temp - row;
 
 
-		T** res = new T * [row + temp];
-		for (int i = 0; i < row + temp; ++i) {
-			res[i] = new T[row + temp];
-			for (int j = 0; j < row + temp; ++j) {
-				if (i < row && j < row) {
+		std::vector<std::vector<T>> res(temp);
+		for (int i = 0; i < temp; ++i) {
+			res[i].resize(temp);
+			for (int j = 0; j < temp; ++j) {
+				if (i < row && j < column) {
 					res[i][j] = data[i][j];
 				}
 				else
@@ -121,22 +148,24 @@ public:
 		}
 
 		old_row = row;
+		old_column = column;
 		data = res;
 		row = new_row;
+		column = new_row;
 	}
 
 	Matrix Matrix_Multiplication(const Matrix& another_one) {
 		if (another_one.row == 1) {
-			T** res = new T * [1];
-			res[0] = new T[1];
+			std::vector<std::vector<T>> res(1);
+			res[0].resize(1);
 			res[0][0] = this->data[0][0] * another_one.data[0][0];
-			return Matrix(another_one.row, res);
+			return Matrix(res, another_one.row, another_one.column);
 		}
 
 		else {
-			T** res = new T * [another_one.row];
+			std::vector<std::vector<T>> res(another_one.row);
 			for (int i = 0; i < another_one.row; ++i) {
-				res[i] = new T[another_one.row];
+				res[i].resize(another_one.row);
 				for (int j = 0; j < another_one.row; ++j) {
 					res[i][j] = 0;
 					for (int k = 0; k < another_one.row; ++k) {
@@ -144,16 +173,16 @@ public:
 					}
 				}
 			}
-			return Matrix(another_one.row, res);
+			return Matrix(res, another_one.row, another_one.column);
 		}
 	}
 
 	Matrix Matrix_Multiplication_Fast(const Matrix& another_one) {
 		if (another_one.row == 1) {
-			T** res = new T * [1];
-			res[0] = new T[1];
+			std::vector<std::vector<T>> res(1);
+			res[0].resize(1);
 			res[0][0] = this->data[0][0] * another_one.data[0][0];
-			return Matrix(another_one.row, res);
+			return Matrix(res, another_one.row, another_one.column);
 		}
 
 		else {
@@ -179,10 +208,10 @@ public:
 
 	Matrix Strassen_Matrix_Multiplication(const Matrix& another_one) {
 		if (another_one.row == 1) {
-			T** res = new T * [1];
-			res[0] = new T[1];
+			std::vector<std::vector<T>> res(1);
+			res[0].resize(1);
 			res[0][0] = this->data[0][0] * another_one.data[0][0];
-			return Matrix(another_one.row, res);
+			return Matrix(res, another_one.row, another_one.column);
 		}
 
 		else {
@@ -216,22 +245,22 @@ public:
 	}
 
 	Matrix make_Submatrix(Matrix orig, int begin_row, int end_row, int begin_col, int end_col) {
-		T** res = new T * [end_row - begin_row + 1];
+		std::vector<std::vector<T>> res(end_row - begin_row + 1);
 		for (int i = 0; i < end_row - begin_row + 1; ++i) {
-			res[i] = new T[end_col - begin_col + 1];
+			res[i].resize(end_col - begin_col + 1);
 			for (int j = 0; j < end_col - begin_col + 1; ++j) {
 				res[i][j] = orig.data[i + begin_row][j + begin_col];
 			}
 		}
 
-		return Matrix(orig.row / 2, res);
+		return Matrix(res, orig.row / 2, orig.column / 2);
 	}
 
 	Matrix make_Matrix(Matrix a_1_1, Matrix a_1_2, Matrix a_2_1, Matrix a_2_2) {
-		T** res = new T * [a_1_1.row * 2];
+		std::vector<std::vector<T>> res(a_1_1.row * 2);
 
 		for (int i = 0; i < a_1_1.row; ++i) {
-			res[i] = new T[a_1_1.row * 2];
+			res[i].resize(a_1_1.row * 2);
 			for (int j = 0; j < a_1_1.row; ++j) {
 				res[i][j] = a_1_1.data[i][j];
 			}
@@ -240,7 +269,7 @@ public:
 			}
 		}
 		for (int i = a_1_1.row; i < a_1_1.row * 2; ++i) {
-			res[i] = new T[a_1_1.row * 2];
+			res[i].resize(a_1_1.row * 2);
 			for (int j = 0; j < a_1_1.row; ++j) {
 				res[i][j] = a_2_1.data[i - a_1_1.row][j];
 			}
@@ -249,35 +278,37 @@ public:
 			}
 		}
 
-		return Matrix(a_1_1.row * 2, res);
+		return Matrix(res, a_1_1.row * 2, a_1_1.column * 2);
 	}
 
 	Matrix sum_Matrix(const Matrix& another_one) {
 		int row = another_one.row;
-		T** res = new T * [row];
+		int column = another_one.column;
+		std::vector<std::vector<T>> res(row);
 
 		for (int i = 0; i < row; ++i) {
-			res[i] = new T[row];
-			for (int j = 0; j < row; ++j) {
+			res[i].resize(column);
+			for (int j = 0; j < column; ++j) {
 				res[i][j] = this->data[i][j] + another_one.data[i][j];
 			}
 		}
 
-		return Matrix(row, res);
+		return Matrix(res, row, column);
 	}
 
 	Matrix dif_Matrix(const Matrix& another_one) {
 		int row = another_one.row;
-		T** res = new T * [row];
+		int column = another_one.column;
+		std::vector<std::vector<T>> res(row);
 
 		for (int i = 0; i < row; ++i) {
-			res[i] = new T[row];
-			for (int j = 0; j < row; ++j) {
+			res[i].resize(column);
+			for (int j = 0; j < column; ++j) {
 				res[i][j] = this->data[i][j] - another_one.data[i][j];
 			}
 		}
 
-		return Matrix(row, res);
+		return Matrix(res, row, column);
 	}
 
 	Matrix operator+(const Matrix& another) {
@@ -526,11 +557,13 @@ public:
 //	}
 //}
 
-void Initializer(int n) {
+void Initializer(int n, int m) {
 	Matrix<int> first;
-	first.create_Matrix(n);
+	first.create_Matrix(n, m);
 	Matrix<int> second;
-	second.create_Matrix(n);
+	second.create_Matrix(m, n);
+	first.additioning();
+	second.additioning();
 
 	auto t_start = std::chrono::high_resolution_clock::now();
 	Matrix<int> res = first * second;
@@ -538,10 +571,11 @@ void Initializer(int n) {
 
 	std::cout << "Time: " << std::chrono::duration<double, std::milli>(t_end - t_start).count() / 1000 << " sec\n";
 
-	//first.additioning();
-	//second.additioning();
 	//first.print();
 	//second.print();
+
+	//system("pause");
+
 	//res.dim_Adjuster();
 	//res.print();
 }
@@ -549,6 +583,7 @@ void Initializer(int n) {
 int main()
 {
 	static int row = 0;
+	static int column = 0;
 	while (true) {
 		system("cls");
 
@@ -558,13 +593,18 @@ int main()
 		if (row <= 0)
 			break;
 
+		std::cout << "Enter column number: ";
+		std::cin >> column;
+
+		if (column <= 0)
+			break;
+
 		system("cls");
 
-		Initializer(row);
+		Initializer(row, column);
 
 		system("pause");
 	}
 
 	return 0;
 }
-
