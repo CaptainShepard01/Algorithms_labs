@@ -11,6 +11,13 @@
 #include <chrono>
 
 template<typename T>
+int dgt_cnt(T n) {
+	int res = 1;	
+	while ((n /= 10) > 0) res++;
+	return res;
+}
+
+template<typename T>
 struct is_bool_is_char
 	: public std::disjunction<
 	std::is_same<bool, typename std::decay<T>::type>,
@@ -63,7 +70,7 @@ public:
 	void create_Matrix(int row, int column) {
 		std::random_device rd;
 		std::mt19937 mt(rd());
-		std::uniform_real_distribution<double> dist(0.0, 100.0);
+		std::uniform_real_distribution<double> dist(0.0, 50.0);
 
 		this->row = row;
 		this->column = column;
@@ -82,9 +89,16 @@ public:
 	}
 
 	void print() {
+		int width = 2;
+		if (data.size() != 1) {
+			width = std::max(dgt_cnt(data[0][0]), dgt_cnt(data[1][1]));
+		}
+		else
+			width = dgt_cnt(data[0][0]);
+
 		for (int i = 0; i < row; ++i) {
 			for (int j = 0; j < column; ++j) {
-				std::cout << std::setw(4) << data[i][j] << ' ';
+				std::cout << std::setw(width) << data[i][j] << ' ';
 			}
 			std::cout << '\n';
 		}
@@ -327,236 +341,6 @@ public:
 	}
 };
 
-//template<typename T>
-//void make_Submatrix(T** orig, T**& res, int begin_row, int end_row, int begin_col, int end_col) {
-//	res = new T * [end_row - begin_row + 1];
-//	for (int i = 0; i < end_row - begin_row + 1; ++i) {
-//		res[i] = new T[end_col - begin_col + 1];
-//		for (int j = 0; j < end_col - begin_col + 1; ++j) {
-//			res[i][j] = orig[i + begin_row][j + begin_col];
-//		}
-//	}
-//}
-//
-//template<typename T>
-//void make_Matrix(T** a_1_1, T** a_1_2, T** a_2_1, T** a_2_2, T**& res, int row) {
-//	res = new T * [row * 2];
-//	for (int i = 0; i < row; ++i) {
-//		res[i] = new T[row * 2];
-//		for (int j = 0; j < row; ++j) {
-//			res[i][j] = a_1_1[i][j];
-//		}
-//		for (int j = row; j < row * 2; ++j) {
-//			res[i][j] = a_1_2[i][j - row];
-//		}
-//	}
-//	for (int i = row; i < row * 2; ++i) {
-//		res[i] = new T[row * 2];
-//		for (int j = 0; j < row; ++j) {
-//			res[i][j] = a_2_1[i - row][j];
-//		}
-//		for (int j = row; j < row * 2; ++j) {
-//			res[i][j] = a_2_2[i - row][j - row];
-//		}
-//	}
-//}
-//
-//template<typename T>
-//T** sum_Matrix(T** first, T** second, int row) {
-//	T** res = new T * [row];
-//	for (int i = 0; i < row; ++i) {
-//		res[i] = new T[row];
-//		for (int j = 0; j < row; ++j) {
-//			res[i][j] = first[i][j] + second[i][j];
-//		}
-//	}
-//
-//	return res;
-//}
-//
-//template<typename T>
-//T** dif_Matrix(T** first, T** second, int row) {
-//	T** res = new T * [row];
-//
-//	for (int i = 0; i < row; ++i) {
-//		res[i] = new T[row];
-//		for (int j = 0; j < row; ++j) {
-//			res[i][j] = first[i][j] - second[i][j];
-//		}
-//	}
-//
-//	return res;
-//}
-//
-//template<typename T>
-//T** additioning(T** current, int row, int& new_row) {
-//	int temp = 1;
-//
-//	while (true) {
-//		temp *= 2;
-//		if (temp > row)
-//			break;
-//		else if (temp == row) {
-//			new_row = row;
-//			return current;
-//		}
-//	}
-//
-//	temp = temp - row;
-//
-//	T** res = new T * [row + temp];
-//	for (int i = 0; i < row + temp; ++i) {
-//		res[i] = new T[row + temp];
-//		for (int j = 0; j < row + temp; ++j) {
-//			if (i < row && j < row) {
-//				res[i][j] = current[i][j];
-//			}
-//			else
-//				res[i][j] = 0;
-//		}
-//	}
-//
-//	new_row = temp + row;
-//	return res;
-//}
-//
-//int** create_Matrix(int row) {
-//	std::random_device rd;
-//	std::mt19937 mt(rd());
-//	std::uniform_real_distribution<double> dist(0.0, 10.0);
-//
-//	int** res = new int* [row];
-//	for (int i = 0; i < row; ++i) {
-//		res[i] = new int[row];
-//		for (int j = 0; j < row; ++j) {
-//			res[i][j] = int(dist(mt));
-//		}
-//	}
-//
-//	return res;
-//}
-//
-//template<typename T>
-//void print(T** a, int row) {
-//	for (int i = 0; i < row; ++i) {
-//		for (int j = 0; j < row; ++j) {
-//			std::cout << std::setw(4) << a[i][j] << ' ';
-//		}
-//		std::cout << '\n';
-//	}
-//	std::cout << "\n";
-//}
-//
-//template<typename T>
-//T** Matrix_Multiplication_Naive(T** first, T** second, int row) {
-//	if (row == 1) {
-//		T** res = new T * [1];
-//		res[0] = new T[1];
-//		res[0][0] = first[0][0] * second[0][0];
-//		return res;
-//	}
-//
-//	else {
-//		T** res = new T * [row];
-//		for (int i = 0; i < row; ++i) {
-//			res[i] = new T[row];
-//			for (int j = 0; j < row; ++j) {
-//				res[i][j] = 0;
-//				for (int k = 0; k < row; ++k) {
-//					res[i][j] += first[i][k] * second[k][j];
-//				}
-//			}
-//		}
-//		return res;
-//	}
-//}
-//
-//template<typename T>
-//T** Matrix_Multiplication(T** first, T** second, int row) {
-//	if (row == 1) {
-//		T** res = new T * [1];
-//		res[0] = new T[1];
-//		res[0][0] = first[0][0] * second[0][0];
-//		return res;
-//	}
-//
-//	else {
-//		T** a_1_1 = nullptr;
-//		make_Submatrix(first, a_1_1, 0, row / 2 - 1, 0, row / 2 - 1);
-//		T** a_1_2 = nullptr;
-//		make_Submatrix(first, a_1_2, 0, row / 2 - 1, row / 2, row - 1);
-//		T** a_2_1 = nullptr;
-//		make_Submatrix(first, a_2_1, row / 2, row - 1, 0, row / 2 - 1);
-//		T** a_2_2 = nullptr;
-//		make_Submatrix(first, a_2_2, row / 2, row - 1, row / 2, row - 1);
-//
-//		T** b_1_1 = nullptr;
-//		make_Submatrix(second, b_1_1, 0, row / 2 - 1, 0, row / 2 - 1);
-//		T** b_1_2 = nullptr;
-//		make_Submatrix(second, b_1_2, 0, row / 2 - 1, row / 2, row - 1);
-//		T** b_2_1 = nullptr;
-//		make_Submatrix(second, b_2_1, row / 2, row - 1, 0, row / 2 - 1);
-//		T** b_2_2 = nullptr;
-//		make_Submatrix(second, b_2_2, row / 2, row - 1, row / 2, row - 1);
-//
-//		T** c_1_1 = sum_Matrix(Matrix_Multiplication(a_1_1, b_1_1, row / 2), Matrix_Multiplication(a_1_2, b_2_1, row / 2), row / 2);
-//		T** c_1_2 = sum_Matrix(Matrix_Multiplication(a_1_1, b_1_2, row / 2), Matrix_Multiplication(a_1_2, b_2_2, row / 2), row / 2);
-//		T** c_2_1 = sum_Matrix(Matrix_Multiplication(a_2_1, b_1_1, row / 2), Matrix_Multiplication(a_2_2, b_2_1, row / 2), row / 2);
-//		T** c_2_2 = sum_Matrix(Matrix_Multiplication(a_2_1, b_1_2, row / 2), Matrix_Multiplication(a_2_2, b_2_2, row / 2), row / 2);
-//
-//		T** c = nullptr;
-//		make_Matrix(c_1_1, c_1_2, c_2_1, c_2_2, c, row / 2);
-//		return c;
-//	}
-//}
-//
-//template<typename T>
-//T** Strassen_Matrix_Multiplication(T** first, T** second, int row) {
-//	if (row == 1) {
-//		T** res = new T * [1];
-//		res[0] = new T[1];
-//		res[0][0] = first[0][0] * second[0][0];
-//		return res;
-//	}
-//
-//	else {
-//		T** a_1_1 = nullptr;
-//		make_Submatrix(first, a_1_1, 0, row / 2 - 1, 0, row / 2 - 1);
-//		T** a_1_2 = nullptr;
-//		make_Submatrix(first, a_1_2, 0, row / 2 - 1, row / 2, row - 1);
-//		T** a_2_1 = nullptr;
-//		make_Submatrix(first, a_2_1, row / 2, row - 1, 0, row / 2 - 1);
-//		T** a_2_2 = nullptr;
-//		make_Submatrix(first, a_2_2, row / 2, row - 1, row / 2, row - 1);
-//
-//		T** b_1_1 = nullptr;
-//		make_Submatrix(second, b_1_1, 0, row / 2 - 1, 0, row / 2 - 1);
-//		T** b_1_2 = nullptr;
-//		make_Submatrix(second, b_1_2, 0, row / 2 - 1, row / 2, row - 1);
-//		T** b_2_1 = nullptr;
-//		make_Submatrix(second, b_2_1, row / 2, row - 1, 0, row / 2 - 1);
-//		T** b_2_2 = nullptr;
-//		make_Submatrix(second, b_2_2, row / 2, row - 1, row / 2, row - 1);
-//
-//		T** m_1 = Strassen_Matrix_Multiplication(sum_Matrix(a_1_1, a_2_2, row / 2), sum_Matrix(b_1_1, b_2_2, row / 2), row / 2);
-//		T** m_2 = Strassen_Matrix_Multiplication(sum_Matrix(a_2_1, a_2_2, row / 2), b_1_1, row / 2);
-//		T** m_3 = Strassen_Matrix_Multiplication(a_1_1, dif_Matrix(b_1_2, b_2_2, row / 2), row / 2);
-//		T** m_4 = Strassen_Matrix_Multiplication(a_2_2, dif_Matrix(b_2_1, b_1_1, row / 2), row / 2);
-//		T** m_5 = Strassen_Matrix_Multiplication(sum_Matrix(a_1_1, a_1_2, row / 2), b_2_2, row / 2);
-//		T** m_6 = Strassen_Matrix_Multiplication(dif_Matrix(a_2_1, a_1_1, row / 2), sum_Matrix(b_1_1, b_1_2, row / 2), row / 2);
-//		T** m_7 = Strassen_Matrix_Multiplication(dif_Matrix(a_1_2, a_2_2, row / 2), sum_Matrix(b_2_1, b_2_2, row / 2), row / 2);
-//
-//		T** c_1_1 = sum_Matrix(m_1, dif_Matrix(sum_Matrix(m_4, m_7, row / 2), m_5, row / 2), row / 2);
-//		T** c_1_2 = sum_Matrix(m_3, m_5, row / 2);
-//		T** c_2_1 = sum_Matrix(m_2, m_4, row / 2);
-//		T** c_2_2 = sum_Matrix(dif_Matrix(m_1, m_2, row / 2), sum_Matrix(m_3, m_6, row / 2), row / 2);
-//
-//		T** c = nullptr;
-//		make_Matrix(c_1_1, c_1_2, c_2_1, c_2_2, c, row / 2);
-//		return c;
-//	}
-//}
-
 void Initializer(int n, int m) {
 	Matrix<int> first;
 	first.create_Matrix(n, m);
@@ -571,13 +355,13 @@ void Initializer(int n, int m) {
 
 	std::cout << "Time: " << std::chrono::duration<double, std::milli>(t_end - t_start).count() / 1000 << " sec\n";
 
-	//first.print();
-	//second.print();
+	first.print();
+	second.print();
 
 	//system("pause");
 
-	//res.dim_Adjuster();
-	//res.print();
+	res.dim_Adjuster();
+	res.print();
 }
 
 int main()

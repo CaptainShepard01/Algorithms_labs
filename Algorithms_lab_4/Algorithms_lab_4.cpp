@@ -1,104 +1,134 @@
-﻿#include <algorithm> 
-#include <iostream> 
-#include <vector> 
+﻿#include <vector>
+#include <random>
+#include <iostream>
+#include <exception>
 
-void display(int* array, int size) {
-	for (int i = 1; i <= size; i++)
-		std::cout << array[i] << " ";
-	std::cout << std::endl;
-}
-int getMax(int array[], int size) {
-	int max = array[1];
-	for (int i = 2; i <= size; i++) {
-		if (array[i] > max)
-			max = array[i];
-	}
-	return max; //the max element from the array
-}
-void countSort(int* array, int size) {
-	int* output = new int[size + 1];
-	int max = getMax(array, size);
-	int* count = new int[max + 1];     //create count array (max+1 number of elements)
-	for (int i = 0; i <= max; i++)
-		count[i] = 0;     //initialize count array to all zero
-	for (int i = 1; i <= size; i++)
-		count[array[i]]++;     //increase number count in count array.
-	for (int i = 1; i <= max; i++)
-		count[i] += count[i - 1];     //find cumulative frequency
-	for (int i = size; i >= 1; i--) {
-		output[count[array[i]]] = array[i];
-		count[array[i]] -= 1; //decrease count for same numbers
-	}
-	for (int i = 1; i <= size; i++) {
-		array[i] = output[i]; //store output array to main array
-	}
-}
-
-//void Counting_Sort(int a[], int n) {
-//	int* c = new int[2];
-//	for (int i = 0; i < 2; ++i) {
-//		c[i] = 0;
-//	}
-//
-//	int* b = new int[n];
-//
-//	for (int j = 0; j < n; ++j) {
-//		c[a[j]] = c[a[j]] + 1;
-//	}
-//
-//	for (int i = 1; i < 2; ++i) {
-//		c[i] += c[i - 1];
-//	}
-//
-//	for (int j = n - 1; j >= 0; --j) {
-//		b[c[a[j]]] = a[j];
-//		c[a[j]] = c[a[j]] - 1;
-//	}
-//
-//	for (int i = 0; i < n; ++i) {
-//		a[i] = b[i];
-//	}
-//}
-
-
-// Function to sort arr[] of size n using bucket sort 
 template<typename T>
-void bucketSort(T* arr, int n)
-{
-	// 1) Create n empty buckets 
-	std::vector<T>* b = new std::vector<T>[2];
+class Container {
+	int key;
+	T data;
 
-	// 2) Put array elements in different buckets 
-	for (int i = 0; i < n; i++) {
-		//int bi = arr[i]; // Index in bucket 
-		b[arr[i]].push_back(arr[i]);
+public:
+	Container(int key = 0, T data = {})
+		:key(key),
+		data(data) {
+		if (key != 0 && key != 1)
+			throw std::invalid_argument("You may use ONLY 0 OR 1 for a key.");
 	}
 
-	// 3) Sort individual buckets 
-	for (int i = 0; i < n; i++)
-		std::stable_sort(b[i].begin(), b[i].end());
+	bool operator< (const Container<T>& rhs) {
+		return key < rhs.key;
+	}
 
-	// 4) Concatenate all buckets into arr[] 
-	int index = 0;
-	for (int i = 0; i < n; i++)
-		for (int j = 0; j < b[i].size(); j++)
-			arr[index++] = b[i][j];
+	int getKey() const {
+		return key;
+	}
 
-	delete[] b;
+	template<typename T>
+	friend std::ostream& operator<<(std::ostream& out, const Container<T>& c);
+};
+
+template<typename T>
+std::ostream& operator<<(std::ostream& out, const Container<T>& c) {
+	out << c.key << " -> " << c.data;
+	return out;
 }
 
+auto getRandomVector(int n) {
+	std::vector<Container<double>> data;
 
-int main()
-{
-	//float arr[] = { 0.897, 0.565, 0.656, 0.1234, 0.665, 0.3434 };
-	//int n = sizeof(arr) / sizeof(arr[0]);
+	std::random_device rd;
+	std::mt19937 mt(rd());
+	std::uniform_real_distribution<double> dist(0, 2);
 
-	int a[] = { 0,1,1,0,0,1,0,1,0 };
+	for (int i = 0; i < n; i++) {
+		data.push_back(Container<double>({ (int)dist(mt), (double)i }));
+	}
 
-	//Counting_Sort(a, sizeof(a)/sizeof(int));
-	bucketSort(a, 9);
-		std::cout << "Sorted array is \n";
-	for (int i = 0; i < 9; i++)
-		std::cout << a[i] << " ";
-	return 0;
+	return data;
+}
+
+//	linear | stable
+template<typename T>
+void countingSort(typename std::vector<T>::iterator begin, typename std::vector<T>::iterator end, int min = 0, int max = 1) {
+	int amount = std::distance(begin, end);
+	if (amount == 0 || min > max)
+		return;
+
+	std::vector<int> counts(max - min + 1);
+	std::vector<T> result(amount);
+
+	for (auto it = begin; it < end; it = std::next(it)) {
+		++counts[it->getKey() - min];
+	}
+
+	counts[0]--;
+	for (int i = 1, k = max - min + 1; i < k; i++) {
+		counts[i] += counts[i - 1];
+	}
+
+	for (int i = amount - 1; i >= 0; i--) {
+		int index = std::next(begin, i)->getKey();
+		result[counts[index]] = *std::next(begin, i);
+		counts[std::next(begin, i)->getKey()]--;
+	}
+
+	std::copy(result.begin(), result.end(), begin);
+}
+
+//	const space | stable
+template<typename Iterator>
+void insertionSort(Iterator begin, Iterator end) {
+	for (auto it = std::next(begin); it < end; it++) {
+		for (auto j = it; j > begin; j--) {
+			if (*j < *std::prev(j))
+				std::iter_swap(j, std::prev(j));
+		}
+	}
+}
+
+//	const space | linear
+template<typename Iterator>
+void edgeSort(Iterator begin, Iterator end) {
+	if (begin >= end)
+		return;
+
+	end = std::prev(end);
+	while (begin < end) {
+		while (begin->getKey() != 1 && begin < end) {
+			begin = std::next(begin);
+		}
+
+		while (end->getKey() != 0 && begin < end) {
+			end = std::prev(end);
+		}
+
+		if (begin > end)
+			break;
+
+		std::iter_swap(begin, end);
+	}
+}
+
+template<typename T>
+void printVector(const std::vector<T>& v) {
+	for (const auto& item : v) {
+		std::cout << item << " | ";
+	}
+	std::cout << std::endl;
+
+}
+
+int main() {
+	std::vector<Container<double>> data = getRandomVector(10);
+
+	std::cout << "Generated :\n";
+	printVector(data);
+
+	//countingSort<Container<double>>(data.begin(), data.end());
+	//insertionSort(data.begin(), data.end());
+	edgeSort(data.begin(), data.end());
+
+	std::cout << "Sorted :\n";
+	printVector(data);
 }
