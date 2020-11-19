@@ -12,7 +12,7 @@
 
 template<typename T>
 int dgt_cnt(T n) {
-	int res = 1;	
+	int res = 1;
 	while ((n /= 10) > 0) res++;
 	return res;
 }
@@ -38,6 +38,10 @@ private:
 	int old_column;
 public:
 	Matrix(std::vector<std::vector<T>> data = {}, int row = 0, int column = 0) :row(row), data(data), old_row(row), column(column), old_column(column) {};
+
+	std::vector<std::vector<T>> getData() {
+		return data;
+	}
 
 	bool is_row_empty(int index_row) {
 		for (int i = 0; i < column; ++i) {
@@ -118,7 +122,7 @@ public:
 			if (is_row_empty(i)) {
 				delete_row();
 			}
-			else 
+			else
 				break;
 		}
 
@@ -333,7 +337,7 @@ public:
 	}
 	Matrix operator*(const Matrix& another_one) {
 		if (another_one.row >= 64) {
-			return Matrix_Multiplication(another_one);
+			return Strassen_Matrix_Multiplication(another_one);
 		}
 		else
 			return Matrix_Multiplication(another_one);
@@ -353,21 +357,64 @@ void Initializer(int n, int m) {
 	Matrix<int> res = first * second;
 	auto t_end = std::chrono::high_resolution_clock::now();
 
+	Matrix<int> res_naive = first.Matrix_Multiplication(second);
+
+	for (int i = 0; i < n; ++i) {
+		for (int j = 0; j < m; ++j) {
+			if (res.getData()[i][j] != res_naive.getData()[i][j])
+				std::cout << "Incorrect!\n\n";
+		}
+	}
+
 	std::cout << "Time: " << std::chrono::duration<double, std::milli>(t_end - t_start).count() / 1000 << " sec\n";
 
-	first.print();
-	second.print();
-
-	//system("pause");
-
-	res.dim_Adjuster();
-	res.print();
+	//first.print();
+	//second.print();
+	//
+	////system("pause");
+	//
+	//res.dim_Adjuster();
+	//res.print();
 }
 
 int main()
 {
 	static int row = 0;
 	static int column = 0;
+
+	//int f = 1000;
+	//
+	//while (true) {
+	//
+	//	Matrix<int> first;
+	//	first.create_Matrix(f, f);
+	//	Matrix<int> second;
+	//	second.create_Matrix(f, f);
+	//	first.additioning();
+	//	second.additioning();
+	//
+	//	auto t_start = std::chrono::high_resolution_clock::now();
+	//	Matrix<int> res = first.Matrix_Multiplication(second);
+	//	auto t_end = std::chrono::high_resolution_clock::now();
+	//
+	//	auto t_start_str = std::chrono::high_resolution_clock::now();
+	//	Matrix<int> res_1 = first*second;
+	//	auto t_end_str = std::chrono::high_resolution_clock::now();
+	//
+	//	std::chrono::duration<double, std::milli>(t_end - t_start).count();
+	//
+	//	if (std::chrono::duration<double, std::milli>(t_end_str - t_start_str).count() < std::chrono::duration<double, std::milli>(t_end - t_start).count()) {
+	//		std::cout << "Dimension = " << f << std::endl;
+	//		break;
+	//	}
+	//	else {
+	//		std::cout << f << std::endl;
+	//		std::cout << "Naive multiplication: " << std::chrono::duration<double, std::milli>(t_end - t_start).count() / 1000 << " sec\n";
+	//		std::cout << "Strassen multiplication: " << std::chrono::duration<double, std::milli>(t_end_str - t_start_str).count() / 1000 << " sec\n\n";
+	//	}
+	//	++f;
+	//}
+
 	while (true) {
 		system("cls");
 

@@ -30,11 +30,11 @@ public:
 
 template<typename T>
 std::ostream& operator<<(std::ostream& out, const Container<T>& c) {
-	out << c.key << " -> " << c.data;
+	out << c.key << " ==> " << c.data;
 	return out;
 }
 
-auto getRandomVector(int n) {
+auto randomized_Vector(int n) {
 	std::vector<Container<double>> data;
 
 	std::random_device rd;
@@ -48,9 +48,9 @@ auto getRandomVector(int n) {
 	return data;
 }
 
-//	linear | stable
+//	stable sort and linear as well
 template<typename T>
-void countingSort(typename std::vector<T>::iterator begin, typename std::vector<T>::iterator end, int min = 0, int max = 1) {
+void counting_Sort(typename std::vector<T>::iterator begin, typename std::vector<T>::iterator end, int min = 0, int max = 1) {
 	int amount = std::distance(begin, end);
 	if (amount == 0 || min > max)
 		return;
@@ -76,9 +76,9 @@ void countingSort(typename std::vector<T>::iterator begin, typename std::vector<
 	std::copy(result.begin(), result.end(), begin);
 }
 
-//	const space | stable
+//	const space and stable as well
 template<typename Iterator>
-void insertionSort(Iterator begin, Iterator end) {
+void insert_Sort(Iterator begin, Iterator end) {
 	for (auto it = std::next(begin); it < end; it++) {
 		for (auto j = it; j > begin; j--) {
 			if (*j < *std::prev(j))
@@ -87,9 +87,9 @@ void insertionSort(Iterator begin, Iterator end) {
 	}
 }
 
-//	const space | linear
+//	const space and linear as well
 template<typename Iterator>
-void edgeSort(Iterator begin, Iterator end) {
+void iter_Sort(Iterator begin, Iterator end) {
 	if (begin >= end)
 		return;
 
@@ -111,24 +111,26 @@ void edgeSort(Iterator begin, Iterator end) {
 }
 
 template<typename T>
-void printVector(const std::vector<T>& v) {
+void print_Array(const std::vector<T>& v) {
 	for (const auto& item : v) {
-		std::cout << item << " | ";
+		std::cout << item << " || ";
 	}
 	std::cout << std::endl;
 
 }
 
 int main() {
-	std::vector<Container<double>> data = getRandomVector(10);
+	std::vector<Container<double>> data = randomized_Vector(15);
 
-	std::cout << "Generated :\n";
-	printVector(data);
+	std::cout << "Array of data:\n";
+	print_Array(data);
 
-	//countingSort<Container<double>>(data.begin(), data.end());
-	//insertionSort(data.begin(), data.end());
-	edgeSort(data.begin(), data.end());
+	//counting_Sort<Container<double>>(data.begin(), data.end());
+	//insert_Sort(data.begin(), data.end());
+	iter_Sort(data.begin(), data.end());
 
-	std::cout << "Sorted :\n";
-	printVector(data);
+	std::cout << '\n';
+
+	std::cout << "Sorted array:\n";
+	print_Array(data);
 }
