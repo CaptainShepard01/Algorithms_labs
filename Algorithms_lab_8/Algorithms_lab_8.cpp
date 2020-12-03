@@ -15,15 +15,16 @@ std::ostream& operator<<(std::ostream& os, const std::vector<T>& v) {
 	return os;
 }
 
-std::vector<int> naiveSearch(const std::string& pattern, const std::string& text) {
+//Наївний алгоритм
+std::vector<int> N_Search(const std::string& sample, const std::string& string) {
 	std::vector<int> result;
 
-	int m = text.length();
-	int n = pattern.length();
+	int m = string.length();
+	int n = sample.length();
 	for (int i = 0; i <= m - n; i++) {
 		bool flag = true;
 		for (int j = 0; j < n; j++) {
-			if (text[i + j] != pattern[j]) {
+			if (string[i + j] != sample[j]) {
 				flag = false;
 				break;
 			}
@@ -34,35 +35,36 @@ std::vector<int> naiveSearch(const std::string& pattern, const std::string& text
 	return result;
 }
 
-std::vector<int> RKSearch(const std::string& pattern, const std::string& text, int primeNumber = 31) {
+//Рабіна-Карпа
+std::vector<int> RK_Search(const std::string& sample, const std::string& string, int primeNumber = 31) {
 	std::vector<int> result;
 
-	int patternLenght = pattern.length();
-	int textLenght = text.length();
+	int substringLenght = sample.length();
+	int textLenght = string.length();
 	int i = 0, j = 0;
-	int patternHash = 0;
+	int substringHash = 0;
 	int textHash = 0;
-	int h = (int)pow(ALPHABET, patternLenght - 1) % primeNumber;
+	int h = (int)pow(ALPHABET, substringLenght - 1) % primeNumber;
 
-	for (i = 0; i < patternLenght; i++) {
-		patternHash = (ALPHABET * patternHash + pattern[i]) % primeNumber;
-		textHash = (ALPHABET * textHash + text[i]) % primeNumber;
+	for (i = 0; i < substringLenght; i++) {
+		substringHash = (ALPHABET * substringHash + sample[i]) % primeNumber;
+		textHash = (ALPHABET * textHash + string[i]) % primeNumber;
 	}
 
-	for (i = 0; i <= textLenght - patternLenght; i++) {
-		if (patternHash == textHash) {
-			for (j = 0; j < patternLenght; j++) {
-				if (text[i + j] != pattern[j])
+	for (i = 0; i <= textLenght - substringLenght; i++) {
+		if (substringHash == textHash) {
+			for (j = 0; j < substringLenght; j++) {
+				if (string[i + j] != sample[j])
 					break;
 			}
 
-			if (j == patternLenght)
-				//	std::cout << "Pattern found at index " << i << std::endl;
+			if (j == substringLenght)
+				//	std::cout << "sample found at index " << i << std::endl;
 				result.push_back(i);
 		}
 
-		if (i < textLenght - patternLenght) {
-			textHash = (ALPHABET * (textHash - text[i] * h) + text[i + patternLenght]) % primeNumber;
+		if (i < textLenght - substringLenght) {
+			textHash = (ALPHABET * (textHash - string[i] * h) + string[i + substringLenght]) % primeNumber;
 
 			if (textHash < 0)
 				textHash = (textHash + primeNumber);
@@ -89,31 +91,32 @@ std::vector<int> prefixFunction(std::string s) {
 	return pi;
 }
 
-std::vector<int> KMPSearch(const std::string& pattern, const std::string& text) {
+//Кнута-Морріса-Пратта
+std::vector<int> KMP_Search(const std::string& sample, const std::string& string) {
 	std::vector<int> result;
 
-	int patternLength = pattern.length();
-	int textLength = text.length();
+	int substringLength = sample.length();
+	int textLength = string.length();
 
-	auto prefixes = prefixFunction(pattern);
+	auto prefixes = prefixFunction(sample);
 
 	int i = 0;
 	int j = 0;
 
 	while (i < textLength) {
-		if (pattern[j] == text[i]) {
+		if (sample[j] == string[i]) {
 			j++;
 			i++;
 		}
 
-		if (j == patternLength) {
-			//	std::cout << "Found pattern at index " << i - j << std::endl;
+		if (j == substringLength) {
+			//	std::cout << "Found sample at index " << i - j << std::endl;
 			result.push_back(i - j);
 
 			j = prefixes[j - 1];
 		}
 
-		else if (i < textLength && pattern[j] != text[i]) {
+		else if (i < textLength && sample[j] != string[i]) {
 			if (j != 0)
 				j = prefixes[j - 1];
 			else
@@ -124,13 +127,13 @@ std::vector<int> KMPSearch(const std::string& pattern, const std::string& text) 
 	return result;
 }
 
-void preprocessStrongSuffix(std::vector<int>& shift, std::vector<int>& bpos, std::string pattern) {
-	int m = pattern.length();
+void goodSufffixHeuristic(std::vector<int>& shift, std::vector<int>& bpos, std::string sample) {
+	int m = sample.length();
 	int i = m, j = m + 1;
 
 	bpos[i] = j;
 	while (i > 0) {
-		while (j <= m && pattern[i - 1] != pattern[j - 1]) {
+		while (j <= m && sample[i - 1] != sample[j - 1]) {
 			if (shift[j] == 0)
 				shift[j] = j - i;
 			j = bpos[j];
@@ -140,7 +143,7 @@ void preprocessStrongSuffix(std::vector<int>& shift, std::vector<int>& bpos, std
 		bpos[i] = j;
 	}
 
-	m = pattern.length();
+	m = sample.length();
 
 	i = 0, j = 0;
 
@@ -167,15 +170,16 @@ std::vector<int> badCharHeuristic(const std::string& str) {
 	return badchar;
 }
 
-std::vector<int> BMSearch(const std::string& pattern, const std::string& text) {
-	int m = pattern.size();
-	int n = text.size();
+//Бойєра-Мура
+std::vector<int> BM_Search(const std::string& sample, const std::string& string) {
+	int m = sample.size();
+	int n = string.size();
 
 	std::vector<int>bpos(m + 1), shift(m + 1, 0), result;
 
-	std::vector<int> badchar = badCharHeuristic(pattern);
+	std::vector<int> badchar = badCharHeuristic(sample);
 
-	preprocessStrongSuffix(shift, bpos, pattern);
+	goodSufffixHeuristic(shift, bpos, sample);
 
 	int s = 0;
 
@@ -184,18 +188,18 @@ std::vector<int> BMSearch(const std::string& pattern, const std::string& text) {
 	while (s <= (n - m)) {
 		int j = m - 1;
 
-		while (j >= 0 && pattern[j] == text[s + j])
+		while (j >= 0 && sample[j] == string[s + j])
 			j--;
 
 		if (j < 0) {
-			//	std::cout << "Pattern occurs at shift = " << s << std::endl;
+			//	std::cout << "sample occurs at shift = " << s << std::endl;
 			result.push_back(s);
-			d_1 = s + (s + m < n) ? m - badchar[text[s + m]] : 1;
+			d_1 = s + (s + m < n) ? m - badchar[string[s + m]] : 1;
 			s += std::max(shift[0], d_1);
 		}
 
 		else
-			s += std::max(1, j - badchar[text[s + j]]);
+			s += std::max(1, j - badchar[string[s + j]]);
 	}
 
 	return result;
@@ -210,30 +214,31 @@ std::vector<int> shiftTable(const std::string& p) {
 	return table;
 }
 
-std::vector<int> HSearch(const std::string& pattern, const std::string& text) {
-	std::vector<int> table = shiftTable(pattern), result;
+//Хорспула
+std::vector<int> H_Search(const std::string& sample, const std::string& string) {
+	std::vector<int> table = shiftTable(sample), result;
 
-	int k = 0, m = pattern.length(), n = text.length();
+	int k = 0, m = sample.length(), n = string.length();
 
 	int i = m - 1;
 	while (i < n) {
 		k = 0;
-		while (k < m && pattern[m - 1 - k] == text[i - k])
+		while (k < m && sample[m - 1 - k] == string[i - k])
 			k++;
 		if (k == m) {
 			result.push_back(i - m + 1);
 			i++;
 		}
 		else
-			i += table[text[i]];
+			i += table[string[i]];
 	}
 	return result;
 }
 
 int main() {
-	std::cout << naiveSearch("abcd", "abcdababcdabcdcdabcddddcaabcd") << std::endl;
-	std::cout << RKSearch("abcd", "abcdababcdabcdcdabcddddcaabcd") << std::endl;
-	std::cout << KMPSearch("abcd", "abcdababcdabcdcdabcddddcaabcd") << std::endl;
-	std::cout << BMSearch("abcd", "abcdababcdabcdcdabcddddcaabcd") << std::endl;
-	std::cout << HSearch("abcd", "abcdababcdabcdcdabcddddcaabcd") << std::endl;
+	std::cout << "Naive: " << N_Search("bcd", "hgjbcdhgbcdbdbcd") << std::endl;
+	std::cout << "Rabin-Karp: " << RK_Search("bcd", "hgjbcdhgbcdbdbcd") << std::endl;
+	std::cout << "Knuth-Morris-Pratt: " << KMP_Search("bcd", "hgjbcdhgbcdbdbcd") << std::endl;
+	std::cout << "Boyer-Moore: " << BM_Search("bcd", "hgjbcdhgbcdbdbcd") << std::endl;
+	std::cout << "Horspool: " << H_Search("bcd", "hgjbcdhgbcdbdbcd") << std::endl;
 }
