@@ -8,6 +8,7 @@
 template <class T>
 std::ostream& operator<<(std::ostream& os, const std::vector<T>& v) {
 	os << '[';
+
 	for (auto i = v.begin(); i != v.end(); ++i)
 		os << ' ' << *i;
 
@@ -127,83 +128,93 @@ std::vector<int> KMP_Search(const std::string& sample, const std::string& string
 	return result;
 }
 
-void goodSufffixHeuristic(std::vector<int>& shift, std::vector<int>& bpos, std::string sample) {
-	int m = sample.length();
-	int i = m, j = m + 1;
 
-	bpos[i] = j;
-	while (i > 0) {
-		while (j <= m && sample[i - 1] != sample[j - 1]) {
-			if (shift[j] == 0)
-				shift[j] = j - i;
-			j = bpos[j];
+int maxPrefix(std::string substr)
+{
+	int res = 0;
+
+	for (int i = 0, j = substr.length() - 1; i < substr.length() - 1; i++, j--)
+	{
+		if (substr.substr(0, i + 1) == substr.substr(j, i + 1))
+		{
+			res = i + 1;
 		}
-		i--;
-		j--;
-		bpos[i] = j;
 	}
 
-	m = sample.length();
+	return res;
+}
 
-	i = 0, j = 0;
+std::vector<int> goodSuff(std::string substr)
+{
+	int length = substr.length();
 
-	j = bpos[0];
+	int max_shift = length - maxPrefix(substr);
 
-	for (i = 0; i <= m; i++) {
-		if (shift[i] == 0)
-			shift[i] = j;
+	std::vector<int> shifts(substr.length(), max_shift);
 
-		if (i == j)
-			j = bpos[j];
+	shifts[0] = 0;
+
+	for (int i = 1; i < length; ++i) {
+		std::string i_suf = substr.substr(length - i, i);
+
+		std::string to_find_in = substr.substr(0, length - 1);
+
+		int shift_from_beginning = (signed)to_find_in.rfind(i_suf);
+
+		if (shift_from_beginning != -1) {
+			shifts[i] = length - (shift_from_beginning + i_suf.length());
+		}
 	}
+
+	return shifts;
 }
 
-std::vector<int> badCharHeuristic(const std::string& str) {
-	int i = 0;
-	int size = str.length();
+std::vector<int> badChar(std::string substr) {
+	std::vector<int> shifts(256, substr.length());
 
-	std::vector<int> badchar(ALPHABET, -1);
-
-	for (i = 0; i < size; i++)
-		badchar[(int)str[i]] = i;
-
-	return badchar;
+	for (int j = 0; j < substr.length() - 1; j++) 
+		shifts[(int)substr[j]] = substr.length() - j - 1;
+	
+	return shifts;
 }
 
-//Бойєра-Мура
-std::vector<int> BM_Search(const std::string& sample, const std::string& string) {
-	int m = sample.size();
-	int n = string.size();
+std::vector<int> BM_Search(std::string substr, std::string str)
+{
+	//std::vector<int> shifts(substr.size() + 1, 0);
+	std::vector<int> res;
+	std::vector<int> badC = badChar(substr);
+	std::vector<int> shifts = goodSuff(substr);
 
-	std::vector<int>bpos(m + 1), shift(m + 1, 0), result;
+	int pos = 0, pos_shift = 0;
 
-	std::vector<int> badchar = badCharHeuristic(sample);
+	while (pos <= (str.size() - substr.size()))	{
+		int k = 0;
+		int j = substr.size() - 1;
 
-	goodSufffixHeuristic(shift, bpos, sample);
-
-	int s = 0;
-
-	int d_1 = 0;
-
-	while (s <= (n - m)) {
-		int j = m - 1;
-
-		while (j >= 0 && sample[j] == string[s + j])
+		while (j >= 0 && substr[j] == str[pos + j])	{
 			j--;
-
-		if (j < 0) {
-			//	std::cout << "sample occurs at shift = " << s << std::endl;
-			result.push_back(s);
-			d_1 = s + (s + m < n) ? m - badchar[string[s + m]] : 1;
-			s += std::max(shift[0], d_1);
+			k++;
 		}
 
-		else
-			s += std::max(1, j - badchar[string[s + j]]);
+		pos_shift = std::max(badC[(int)str[pos + j]] - k, 1);
+
+		if (k == 0)	{
+			pos += pos_shift;
+		}
+		else {
+			if (j < 0) {
+				res.push_back(pos);
+				pos += pos_shift;
+			}
+			else {
+				pos += std::max(pos_shift, shifts[k]);
+			}
+		}
 	}
 
-	return result;
+	return res;
 }
+
 
 std::vector<int> shiftTable(const std::string& p) {
 	std::vector<int> table(ALPHABET, p.length());

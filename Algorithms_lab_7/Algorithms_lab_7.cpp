@@ -56,7 +56,7 @@ std::vector<std::pair<int, int>> RK_matrix(const std::vector<std::string>& text,
 
 	int m = text.size();
 	int n = pattern.size();
-
+	
 	for (int row = 0; row < m - n + 1; row++) {
 
 		int firstEntryCol = -1;
