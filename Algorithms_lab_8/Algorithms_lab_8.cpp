@@ -172,9 +172,9 @@ std::vector<int> goodSuff(std::string substr)
 std::vector<int> badChar(std::string substr) {
 	std::vector<int> shifts(256, substr.length());
 
-	for (int j = 0; j < substr.length() - 1; j++) 
+	for (int j = 0; j < substr.length() - 1; j++)
 		shifts[(int)substr[j]] = substr.length() - j - 1;
-	
+
 	return shifts;
 }
 
@@ -187,18 +187,21 @@ std::vector<int> BM_Search(std::string substr, std::string str)
 
 	int pos = 0, pos_shift = 0;
 
-	while (pos <= (str.size() - substr.size()))	{
+	while (pos <= (str.size() - substr.size())) {
 		int k = 0;
 		int j = substr.size() - 1;
 
-		while (j >= 0 && substr[j] == str[pos + j])	{
+		while (j >= 0 && substr[j] == str[pos + j]) {
 			j--;
 			k++;
 		}
 
-		pos_shift = std::max(badC[(int)str[pos + j]] - k, 1);
+		if (pos + j >= 0)
+			pos_shift = std::max(badC[(int)str[pos + j]] - k, 1);
+		else
+			pos_shift = 1;
 
-		if (k == 0)	{
+		if (k == 0) {
 			pos += pos_shift;
 		}
 		else {
