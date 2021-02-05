@@ -1,6 +1,33 @@
 ﻿#include <iostream>
-#include <vector>
-#include <string>
+#include <exception>
+
+struct WorldMap {
+	std::string country;
+	std::string city;
+
+	bool operator <(const WorldMap& rhs) const {
+		return this->city < rhs.city;
+	}
+
+	bool operator >(const WorldMap& rhs)const {
+		return this->city > rhs.city;
+	}
+
+	bool operator ==(const WorldMap& rhs)const {
+		return this->city == rhs.city;
+	}
+};
+
+std::ostream& operator<<(std::ostream& os, const WorldMap& v) {
+	os << '{';
+
+	if (v.city != "") {
+		os << " Country: " << v.country << ", City: " << v.city;
+	}
+
+	os << " }";
+	return os;
+}
 
 
 enum Color { RED, BLACK };
@@ -9,31 +36,41 @@ template <typename T>
 struct treeNode {
 	T key;
 	Color color = BLACK;
-	treeNode* parent = nullptr;
+	treeNode* parent;
 	treeNode* left = nullptr;
 	treeNode* right = nullptr;
+
+	int descendants = 0;
 };
-
-template <typename T>
-class RBTree;
-
 
 template <typename T>
 class RBTree {
 private:
-	treeNode<T>* root;
+	treeNode<T>* nill = new treeNode<T>();
+	treeNode<T>* root = nill;
 
 	void leftRotate(treeNode<T>* x) {
 		treeNode<T>* y = x->right;
 		x->right = y->left;
 
-		if (y->left != nullptr) {
+		int alpha = x->left->descendants + 1, gamma = y->right->descendants + 1;
+		if (x->left == nill) {
+			alpha--;
+		}
+		if (y->right == nill) {
+			gamma--;
+		}
+
+		x->descendants -= (gamma + 1);
+		y->descendants += (alpha + 1);
+
+		if (y->left != nill) {
 			y->left->parent = x;
 		}
 
 		y->parent = x->parent;
 
-		if (x->parent == nullptr) {
+		if (x->parent == nill) {
 			root = y;
 		}
 		else {
@@ -41,40 +78,51 @@ private:
 				x->parent->left = y;
 			}
 			else {
-				x->parent->left = y;
+				x->parent->right = y;
 			}
 		}
 		y->left = x;
 		x->parent = y;
 	}
 
-	void rightRotate(treeNode<T>* x) {
-		treeNode<T>* y = x->left;
-		x->left = y->right;
+	void rightRotate(treeNode<T>* y) {
+		treeNode<T>* x = y->left;
+		y->left = x->right;
 
-		if (y->right != nullptr) {
-			y->right->parent = x;
+		int alpha = x->left->descendants + 1, gamma = y->right->descendants + 1;
+		if (x->left == nill) {
+			alpha--;
+		}
+		if (y->right == nill) {
+			gamma--;
 		}
 
-		y->parent = x->parent;
+		x->descendants += (gamma + 1);
+		y->descendants -= (alpha + 1);
 
-		if (x->parent == nullptr) {
-			root = y;
+		if (x->right != nill) {
+			x->right->parent = y;
+		}
+
+		x->parent = y->parent;
+
+		if (y->parent == nill) {
+			root = x;
 		}
 		else {
-			if (x == x->parent->right) {
-				x->parent->right = y;
+			if (y == y->parent->right) {
+				y->parent->right = x;
 			}
 			else {
-				x->parent->right = y;
+				y->parent->left = x;
 			}
 		}
-		y->right = x;
-		x->parent = y;
+		x->right = y;
+		y->parent = x;
 	}
 
 	void insertFixup(treeNode<T>* z) {
-		treeNode<T>* y = new treeNode<T>;
+		treeNode<T>* y;
 
 		while (z->parent->color == RED) {
 			if (z->parent == z->parent->parent->left) {
@@ -120,7 +168,7 @@ private:
 
 	void removeFixup(treeNode<T>* x) {
 		while (x != root && x->color == BLACK) {
-			treeNode<T>* w = new treeNode<T>;
+			treeNode<T>* w;
 			if (x == x->parent->left) {
 				w = x->parent->right;
 				if (w->color == RED) {
@@ -178,11 +226,11 @@ private:
 	}
 
 	treeNode<T>* treeSuccessor(treeNode<T>* x) {
-		if (x->right != nullptr) {
+		if (x->right != nill) {
 			return treeMinimum(x->right);
 		}
 		treeNode<T>* y = x->parent;
-		while (y != nullptr && x == x->right) {
+		while (y != nill && x == y->right) {
 			x = y;
 			y = y->parent;
 		}
@@ -190,45 +238,92 @@ private:
 	}
 
 	treeNode<T>* treeMinimum(treeNode<T>* x) {
-		while (x->left != nullptr) {
+		while (x->left != nill) {
 			x = x->left;
 		}
 		return x;
 	}
 
 	treeNode<T>* treeMaximum(treeNode<T>* x) {
-		while (x->right != nullptr) {
+		while (x->right != nill) {
 			x = x->right;
 		}
 		return x;
 	}
 
-public:
-	RBTree() {}
-
-	friend std::ostream& operator<< (std::ostream& os, const RBTree<T>& tree);
-
-	treeNode<T>* getRoot() {
-		return root;
+	treeNode<T>* treeSearch(treeNode<T>* x, const T& key) {
+		if (x == nill || key == x->key) {
+			return x;
+		}
+		if (key < x->key)
+			return treeSearch(x->left, key);
+		else
+			return treeSearch(x->right, key);
 	}
 
-	void inorderTreeWalk(treeNode<T>* x) {
-		if (x != nullptr) {
-			inorderTreeWalk(x->left);
-			std::cout << x->key << ' ';
-			inorderTreeWalk(x->right);
+	void inorderTreeWalk(treeNode<T>* x, int depth = 0) {
+		if (x != nill) {
+			inorderTreeWalk(x->left, depth + 1);
+			std::cout << x->key << ' ' << (x->color ? "black" : "red") << " depth:" << depth << " descendants " << x->descendants << std::endl;
+			inorderTreeWalk(x->right, depth + 1);
 		}
 	}
 
+public:
+	RBTree() {
+		root->parent = nill;
+	}
+
+	RBTree(const std::initializer_list<T>& list) {
+		for (const auto& item : list)
+			insert(item);
+	}
+
+	template<typename U>
+	friend std::ostream& operator<<(std::ostream& os, RBTree<U>& tree) {
+		tree.inorderTreeWalk(tree.root);
+		return os;
+	}
+
+	T& operator [](size_t index) {
+		if (index < 0 || index > size()) {
+			throw std::invalid_argument("Index is out of range!");
+		}
+
+		treeNode<T>* current = root;
+		while ((current->left->descendants + (current->left != nill)) != index) {
+			if (current->left->descendants >= index) {
+				current = current->left;
+			}
+			else {
+				index -= (current->left->descendants + 1 + (current->left != nill));
+				current = current->right;
+			}
+		}
+		return current->key;
+	}
+
+	int size() const {
+		if (root)
+			return root->descendants + 1;
+		else
+			return 0;
+	}
+
+	treeNode<T>* treeSearch(const T& key) {
+		return treeSearch(root, key);
+	}
+
 	void insert(const T& item) {
-		treeNode<T>* z = new treeNode<T>;
+		treeNode<T>* z = new treeNode<T>();
 		z->key = item;
 
-		treeNode<T>* y = nullptr;
+		treeNode<T>* y = nill;
 		treeNode<T>* x = root;
 
-		while (x != nullptr) {
+		while (x != nill) {
 			y = x;
+			x->descendants++;
 			if (z->key < x->key) {
 				x = x->left;
 			}
@@ -238,60 +333,50 @@ public:
 		}
 
 		z->parent = y;
-		if (y == nullptr) {
+		if (y == nill) {
 			root = z;
 		}
 		else {
-			if(z->key<y->key){
+			if (z->key < y->key) {
 				y->left = z;
 			}
 			else {
 				y->right = z;
 			}
 		}
+		//y->descendants++;
 
-		z->left = nullptr;
-		z->right = nullptr;
+		z->left = nill;
+		z->right = nill;
 		z->color = RED;
-		if (z == root || z->parent == root || z->parent->parent==root || z->parent->parent->left==nullptr|| z->parent->parent->right == nullptr) {
-			return;
-		}
-		insertFixup(z);
-	};
 
-	treeNode<T>* treeSearch(treeNode<T>* x, const T& key) {
-		if (x == nullptr || key == x->key) {
-			return x;
-		}
-		if (key < x->key)
-			return treeSearch(x->left, key);
-		else
-			return treeSearch(x->right, key);
+		insertFixup(z);
 	}
 
 	treeNode<T>* remove(const T& item) {
-		treeNode<T>* z = treeSearch(getRoot(), item);
+		treeNode<T>* z = treeSearch(root, item);
+		treeNode<T>* decreaser;
 
-		treeNode<T>* y = new treeNode<T>;
-		treeNode<T>* x = new treeNode<T>;
+		if (z == nill)
+			throw std::invalid_argument("There`s no element with such parameters.");
 
-		if (z->left != nullptr || z->right != nullptr) {
+		treeNode<T>* x, * y;
+
+		if (z->left == nill || z->right == nill)
 			y = z;
-		}
-		else {
+		else
 			y = treeSuccessor(z);
-		}
 
-		if (y->left != nullptr) {
+		decreaser = y->parent;
+
+		if (y->left != nill)
 			x = y->left;
-		}
-		else {
+		else
 			x = y->right;
-		}
 
 		x->parent = y->parent;
 
-		if (y->parent == nullptr) {
+		if (y->parent == nill) {
 			root = x;
 		}
 		else {
@@ -307,6 +392,11 @@ public:
 			z->key = y->key;
 		}
 
+		while (decreaser != nill) {
+			decreaser->descendants--;
+			decreaser = decreaser->parent;
+		}
+
 		if (y->color == BLACK) {
 			removeFixup(x);
 		}
@@ -315,17 +405,17 @@ public:
 	}
 
 	treeNode<T>* remove(treeNode<T>* z) {
-		treeNode<T>* y = new treeNode<T>;
-		treeNode<T>* x = new treeNode<T>;
+		treeNode<T>* y;
+		treeNode<T>* x;
 
-		if (z->left == nullptr && z->right == nullptr) {
+		if (z->left == nill && z->right == nill) {
 			y = z;
 		}
 		else {
 			y = treeSuccessor(z);
 		}
 
-		if (y->left != nullptr) {
+		if (y->left != nill) {
 			x = y->left;
 		}
 		else {
@@ -334,7 +424,7 @@ public:
 
 		x->parent = y->parent;
 
-		if (y->parent == nullptr) {
+		if (y->parent == nill) {
 			root = x;
 		}
 		else {
@@ -358,34 +448,41 @@ public:
 	}
 };
 
-template <class T>
-std::ostream& operator<<(std::ostream& os, const RBTree<T>& tree) {
-	tree.inorderTreeWalk();
-	return os;
-}
+int main() {
+	RBTree<WorldMap> tree;
 
-int main()
-{
-	RBTree<int> testTree;
+	tree.insert({ "Italy","Rome" });
+	std::cout << tree << std::endl;
+	tree.insert({ "Spain","Madrid" });
+	std::cout << tree << std::endl;
+	tree.insert({ "Ukraine","Kyiv" });
+	std::cout << tree << std::endl;
+	tree.insert({ "Spain","Barcelona" });
+	std::cout << tree << std::endl;
+	tree.insert({ "Russia","Moscow" });
+	std::cout << tree << std::endl;
+	tree.insert({ "Italy","Neapol" });
 
-	testTree.insert(5);
-	testTree.insert(5);
-	testTree.insert(5);
-	testTree.insert(5);
-	testTree.insert(3);
-	testTree.insert(2);
-	testTree.insert(0);
-	testTree.insert(5);
-
-
-	testTree.inorderTreeWalk(testTree.getRoot());
+	std::cout << tree << std::endl;
 
 	std::cout << std::endl;
 
-	testTree.remove(3);
+	tree.remove({ "Ukraine","Kyiv" });
 
-	testTree.inorderTreeWalk(testTree.getRoot());
+	std::cout << tree << std::endl;
+	tree.insert({ "USA","New-York" });
 
+	std::cout << tree << std::endl;
 
-	//std::cout << testTree << std::endl;
+	for (int i = 0; i < tree.size(); ++i) {
+		std::cout << tree[i] << std::endl;
+	}
+
+	//try {
+	//	std::cout << tree[-3] << std::endl;
+	//}
+	//catch (std::exception& e_bat) {
+	//	std::cout << e_bat.what() << std::endl;
+	//}
+	//std::cout << tree[40]<< std::endl;
 }

@@ -11,23 +11,23 @@ struct WorldMap {
 
 template <class T>
 std::ostream& operator<<(std::ostream& os, const std::vector<T>& v) {
-	os << '[';
+	os << '(';
 
 	for (auto i = v.begin(); i != v.end(); ++i)
 		os << ' ' << *i;
 
-	os << " ]";
+	os << " )";
 	return os;
 }
 
 std::ostream& operator<<(std::ostream& os, const WorldMap& v) {
-	os << '[';
+	os << '{';
 
 	if (v.City != "") {
 		os << " Country: " << v.Country << ", City: " << v.City;
 	}
 
-	os << " ]";
+	os << " }";
 	return os;
 }
 
@@ -52,16 +52,16 @@ std::ostream& operator<<(std::ostream& os, const Parameters& params) {
 int universalHashFunction(const int& value, const Parameters& params);
 int universalHashForStrings(const std::string& inputString, const Parameters& params);
 
-class IdealHashMap {
+class perfectHash {
 public:
 	template <typename Iterator>
-	IdealHashMap(Iterator begin, Iterator end, const Parameters& forMainHashFunction)
+	perfectHash(Iterator begin, Iterator end, const Parameters& forMainHashFunction)
 		:forMainHashFunction(forMainHashFunction),
 		data(forMainHashFunction.m) {
 		std::vector<WorldMap> keys(begin, end);
 
-		auto groups = firstHashingStage(keys);
-		secondHashingStage(groups);
+		auto groups = outerHashing(keys);
+		innerHashing(groups);
 	}
 
 	auto getData() {
@@ -73,7 +73,7 @@ public:
 
 		int groupIndex = universalHashForStrings(key, forMainHashFunction);
 
-		if (groupIndex < 0 || groupIndex >= data.size()) {
+		if (groupIndex < 0 || groupIndex >= data.size() || data[groupIndex].second.size() == 0) {
 			return failure;
 		}
 
@@ -95,7 +95,7 @@ private:
 	Parameters forMainHashFunction;
 	std::vector<std::pair<Parameters, std::vector<WorldMap>>> data;
 
-	auto firstHashingStage(const std::vector<WorldMap>& keys) {
+	auto outerHashing(const std::vector<WorldMap>& keys) {
 		std::map<int, std::vector<WorldMap>> result;
 
 		for (const auto& key : keys)
@@ -104,9 +104,9 @@ private:
 		return result;
 	}
 
-	void secondHashingStage(const std::map<int, std::vector<WorldMap>>& groups) {
+	void innerHashing(const std::map<int, std::vector<WorldMap>>& groups) {
 		for (const auto& [id, values] : groups) {
-			Parameters currentParameters = getHashParameters(values);
+			Parameters currentParameters = defineParameters(values);
 			std::vector<WorldMap> currentVector(static_cast<int>(std::pow(values.size(), 2)), WorldMap{ "" , "" });
 
 			for (const auto& value : values) {
@@ -117,7 +117,7 @@ private:
 		}
 	}
 
-	Parameters getHashParameters(const std::vector<WorldMap>& keys) {
+	Parameters defineParameters(const std::vector<WorldMap>& keys) {
 		Parameters currentParams = forMainHashFunction;
 		currentParams.m = static_cast<int>(std::pow(keys.size(), 2));
 
@@ -156,7 +156,7 @@ std::ostream& operator<<(std::ostream& os, const std::vector<std::pair<Parameter
 			std::cout << std::endl;
 
 		os << i->first;
-		os << " ---> " << i->second;
+		os << " ===== " << i->second;
 	}
 
 	return os;
@@ -192,7 +192,21 @@ int main() {
 							{"Italy", "Neapol"},
 	};
 
-	IdealHashMap map(keys.begin(), keys.end(), initialParams);
+	perfectHash map(keys.begin(), keys.end(), initialParams);
 
-	std::cout << map["Barcelona"] << std::endl;
+	int n = 0;
+	std::cout << "Enter n: ";
+	std::cin >> n;
+
+
+	for (int i = 0; i < n; ++i) {
+		system("cls");
+
+		std::string cityToFind;
+		std::cin >> cityToFind;
+
+		std::cout << map[cityToFind] << std::endl;
+
+		system("pause >> void");
+	}
 }
