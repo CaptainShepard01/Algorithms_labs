@@ -344,7 +344,6 @@ public:
 				y->right = z;
 			}
 		}
-		//y->descendants++;
 
 		z->left = nill;
 		z->right = nill;
@@ -407,6 +406,10 @@ public:
 	treeNode<T>* remove(treeNode<T>* z) {
 		treeNode<T>* y;
 		treeNode<T>* x;
+		treeNode<T>* decreaser;
+
+		if (z == nill)
+			throw std::invalid_argument("There`s no element with such parameters.");
 
 		if (z->left == nill && z->right == nill) {
 			y = z;
@@ -414,6 +417,8 @@ public:
 		else {
 			y = treeSuccessor(z);
 		}
+
+		decreaser = y->parent;
 
 		if (y->left != nill) {
 			x = y->left;
@@ -438,6 +443,11 @@ public:
 
 		if (y != z) {
 			z->key = y->key;
+		}
+
+		while (decreaser != nill) {
+			decreaser->descendants--;
+			decreaser = decreaser->parent;
 		}
 
 		if (y->color == BLACK) {
