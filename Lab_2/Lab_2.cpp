@@ -19,13 +19,13 @@ struct WorldMap {
 };
 
 std::ostream& operator<<(std::ostream& os, const WorldMap& v) {
-	os << '{';
+	os << '(';
 
 	if (v.city != "") {
-		os << " Country: " << v.country << ", City: " << v.city;
+		os << " Country: " << v.country << "; City: " << v.city;
 	}
 
-	os << " }";
+	os << " )";
 	return os;
 }
 
@@ -264,7 +264,7 @@ private:
 	void inorderTreeWalk(treeNode<T>* x, int depth = 0) {
 		if (x != nill) {
 			inorderTreeWalk(x->left, depth + 1);
-			std::cout << x->key << ' ' << (x->color ? "black" : "red") << " depth:" << depth << " descendants " << x->descendants << std::endl;
+			std::cout << x->key << " Color: " << (x->color ? "BLACK" : "RED") << ";  nodeDepth = " << depth << ";  Descendants: " << x->descendants << std::endl;
 			inorderTreeWalk(x->right, depth + 1);
 		}
 	}
@@ -484,15 +484,17 @@ int main() {
 
 	std::cout << tree << std::endl;
 
+	std::cout << "Order statistic: " << std::endl;
+
 	for (int i = 0; i < tree.size(); ++i) {
-		std::cout << tree[i] << std::endl;
+		std::cout << i << ": " << tree[i] << std::endl;
 	}
 
-	//try {
-	//	std::cout << tree[-3] << std::endl;
-	//}
-	//catch (std::exception& e_bat) {
-	//	std::cout << e_bat.what() << std::endl;
-	//}
-	//std::cout << tree[40]<< std::endl;
+	try {
+		std::cout << tree[-1] << std::endl;
+		std::cout << tree[100] << std::endl;
+	}
+	catch (std::exception& e) {
+		std::cout << e.what() << std::endl;
+	}
 }
