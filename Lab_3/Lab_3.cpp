@@ -71,7 +71,6 @@ class SplayTree
 		return y;
 	}
 	void splay(treeNode<T>*);
-
 	void getGraphInfo(treeNode<T>* x, std::string& text, int counter) {
 		if (x != NULL) {
 			std::string counterString = std::to_string(counter);
@@ -85,6 +84,7 @@ class SplayTree
 	}
 
 public:
+
 	void print2D();
 	SplayTree();
 	SplayTree(treeNode<T>*);
@@ -96,6 +96,7 @@ public:
 
 	void insert(T);
 	void Delete(T);
+	void Delete(std::string);
 	void inOrderPrint();
 
 	template<typename U>
@@ -386,37 +387,48 @@ treeNode<T>* subtree_min(treeNode<T>* subRoot)
 }
 
 template <typename T>
-void SplayTree<T>::Delete(T x)
-{
+void SplayTree<T>::Delete(T x) {
 	treeNode<T>* del = find(x);
 	if (del == NULL)
-	{
 		return;
-	}
+
 	treeNode<T>* L = del->left;
 	treeNode<T>* R = del->right;
+
 	if (L == NULL && R == NULL)
-	{
-		this->root = NULL;
-	}
-	else if (L == NULL)
-	{
+		root = NULL;
+	else if (L == NULL) {
 		treeNode<T>* M = subtree_min(R);
 		splay(M);
 	}
-	else if (R == NULL)
-	{
+	else if (R == NULL) {
 		treeNode<T>* M = subtree_max(L);
 		splay(M);
 	}
-	else
-	{
+	else {
 		treeNode<T>* M = subtree_max(L);
 		splay(M);
 		M->right = R;
 		R->parent = M;
 	}
+
+	if (del->parent) {
+		if (del->parent->right == del)
+			del->parent->right = NULL;
+		else
+			del->parent->left = NULL;
+	}
+
+
 	delete del;
+}
+
+template <typename T>
+void SplayTree<T>::Delete(std::string x) {
+	T inputData;
+	inputData.city = x;
+
+	Delete(inputData);
 }
 
 template <typename T>
@@ -503,42 +515,48 @@ int main() {
 
 	tree.insert({ "Italy","Rome" });
 	std::cout << tree << std::endl;
-
+	tree.print2D();
+	std::cout <<std:: endl;
 
 	tree.insert({ "Spain","Madrid" });
 	std::cout << tree << std::endl;
-
+	tree.print2D();
+	std::cout << std::endl;
 
 	tree.insert({ "Ukraine","Kyiv" });
 	std::cout << tree << std::endl;
-
+	tree.print2D();
+	std::cout << std::endl;
 
 	tree.insert({ "Spain","Barcelona" });
 	std::cout << tree << std::endl;
-	std::cout << tree.getWebGraphviz() << std::endl;
+	tree.print2D();
+	std::cout << std::endl;
 
 	tree.insert({ "Russia","Moscow" });
 	std::cout << tree << std::endl;
-	std::cout << tree.getWebGraphviz() << std::endl;
+	tree.print2D();
+	std::cout << std::endl;
 
 	tree.insert({ "Italy","Neapol" });
 	std::cout << tree << std::endl;
-	std::cout << tree.getWebGraphviz() << std::endl;
+	tree.print2D();
+	std::cout << std::endl;
 
-
-	tree.Delete({ "Ukraine","Kyiv" });
+	tree.Delete("Kyiv");
 	std::cout << tree << std::endl;
-	std::cout << tree.getWebGraphviz() << std::endl;
+	tree.print2D();
+	std::cout << std::endl;
 
 	tree.insert({ "USA","New-York" });
 	std::cout << tree << std::endl;
+	tree.print2D();
+	std::cout <<std:: endl;
 
 	std::cout << std::endl << std::endl;
 	tree.print2D();
 	std::cout << std::endl << std::endl;
 
-
-	std::cout << tree.getWebGraphviz() << std::endl;
 
 	//treeNode<WorldMap>* toSplit = tree.find("Neapol");
 	//SplayTree<WorldMap> leftTree = tree.split(toSplit);
