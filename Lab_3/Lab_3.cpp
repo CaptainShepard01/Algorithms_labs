@@ -412,13 +412,12 @@ void SplayTree<T>::Delete(T x) {
 		R->parent = M;
 	}
 
-	if (del->parent) {
-		if (del->parent->right == del)
-			del->parent->right = NULL;
-		else
-			del->parent->left = NULL;
-	}
-
+	//if (del->parent) {
+	//	if (del->parent->right == del)
+	//		del->parent->right = NULL;
+	//	else
+	//		del->parent->left = NULL;
+	//}
 
 	delete del;
 }
@@ -543,7 +542,7 @@ int main() {
 	tree.print2D();
 	std::cout << std::endl;
 
-	tree.Delete("Kyiv");
+	tree.Delete("Moscow");
 	std::cout << tree << std::endl;
 	tree.print2D();
 	std::cout << std::endl;

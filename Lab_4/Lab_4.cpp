@@ -40,17 +40,17 @@ std::ostream& operator<<(std::ostream& os, const WorldMap& v) {
 
 #define INFINITY std::numeric_limits<double>::max();
 
-using Probabilities = std::vector<double>;
-using ExpectationTable = std::vector<std::vector<double>>;
-using SumOfSubtreeProbabilitiesTable = std::vector<std::vector<double>>;
-using RootTable = std::vector<std::vector<int>>;
+using probabilities = std::vector<double>;
+using expectationTable = std::vector<std::vector<double>>;
+using subtreeProbabilitiesTable = std::vector<std::vector<double>>;
+using rootTable = std::vector<std::vector<int>>;
 
 template <typename T>
-struct TreeNode {
+struct treeNode {
 	T data;
-	TreeNode* left, * right, * parent;
+	treeNode* left, * right, * parent;
 
-	TreeNode(T data, TreeNode* parent = nullptr, TreeNode* left = nullptr, TreeNode* right = nullptr)
+	treeNode(T data, treeNode* parent = nullptr, treeNode* left = nullptr, treeNode* right = nullptr)
 		:data(data),
 		parent(parent),
 		left(left),
@@ -60,12 +60,13 @@ struct TreeNode {
 template <typename T>
 class OptimalBST {
 private:
-	TreeNode<T>* root = nullptr;
+	treeNode<T>* root = nullptr;
 
-	auto buildOptimalBST(const Probabilities& p, const Probabilities& q, int n) {
-		RootTable root(n);
-		ExpectationTable e(n + 1);
-		SumOfSubtreeProbabilitiesTable w(n + 1);
+	//Optimal BST algorithm after Kormen
+	auto constructOptimalBST(const probabilities& p, const probabilities& q, int n) {
+		rootTable root(n);
+		expectationTable e(n + 1);
+		subtreeProbabilitiesTable w(n + 1);
 
 		for (size_t i = 0; i < n; i++)
 			root[i].resize(n);
@@ -101,7 +102,7 @@ private:
 		return std::make_pair(e, root);
 	}
 
-	void getGraphInfo(TreeNode<T>* x, std::string& text) {
+	void getGraphInfo(treeNode<T>* x, std::string& text) {
 		if (x != nullptr) {
 			if (x->left != nullptr)
 				text += "\"" + x->data.city + "\"" + " -> " + "\"" + x->left->data.city + "\";\n";
@@ -113,9 +114,10 @@ private:
 		}
 	}
 
-	TreeNode<T>* constructOptimalBST(const std::vector<T>& data, const RootTable& root, size_t i = 0, size_t j = 0, TreeNode<T>* lastPtr = nullptr) {
+	//build the tree structure itself
+	treeNode<T>* buildOptimalBST(const std::vector<T>& data, const rootTable& root, size_t i = 0, size_t j = 0, treeNode<T>* lastPtr = nullptr) {
 		if (i == j) {
-			return new TreeNode<T>(data[root[i][j]], lastPtr);
+			return new treeNode<T>(data[root[i][j]], lastPtr);
 		}
 		else if (i > j)
 			return nullptr;
@@ -123,27 +125,27 @@ private:
 		size_t currentIndex = root[i][j];
 
 		if (j - i == root.size() - 1) {
-			this->root = new TreeNode<T>(data[currentIndex]);
+			this->root = new treeNode<T>(data[currentIndex]);
 			lastPtr = this->root;
 		}
 		else {
-			lastPtr = new TreeNode<T>(data[currentIndex], lastPtr);
+			lastPtr = new treeNode<T>(data[currentIndex], lastPtr);
 		}
 
-		lastPtr->left = constructOptimalBST(data, root, i, currentIndex - 1, lastPtr);
-		lastPtr->right = constructOptimalBST(data, root, currentIndex + 1, j, lastPtr);
+		lastPtr->left = buildOptimalBST(data, root, i, currentIndex - 1, lastPtr);
+		lastPtr->right = buildOptimalBST(data, root, currentIndex + 1, j, lastPtr);
 
 		return lastPtr;
 	}
 
-	void print2DUtil(TreeNode<T>* root, int space);
+	void print2DUtil(treeNode<T>* root, int space);
 
 public:
-	OptimalBST(std::vector<T> data, const Probabilities p, const Probabilities q, int n) {
+	OptimalBST(std::vector<T> data, const probabilities p, const probabilities q, int n) {
 
-		auto [e, rootTable] = buildOptimalBST(p, q, n);
+		auto [e, rootTable] = constructOptimalBST(p, q, n);
 
-		constructOptimalBST(data, rootTable, 0, n - 1);
+		buildOptimalBST(data, rootTable, 0, n - 1);
 	}
 
 	std::string getWebGraphviz(std::string graphName = "G") {
@@ -158,33 +160,24 @@ public:
 };
 
 template<typename T>
-void OptimalBST<T>::print2D()
-{
-	// Pass initial space count as 0  
+void OptimalBST<T>::print2D() {
 	this->print2DUtil(root, 0);
 }
 
 template<typename T>
-void OptimalBST<T>::print2DUtil(TreeNode<T>* root, int space)
-{
-	// Base case  
+void OptimalBST<T>::print2DUtil(treeNode<T>* root, int space) {
 	if (root == NULL)
 		return;
 
-	// Increase distance between levels  
 	space += 15;
 
-	// Process right child first  
 	print2DUtil(root->right, space);
 
-	// Print current node after space  
-	// count  
 	std::cout << std::endl;
 	for (int i = 15; i < space; i++)
 		std::cout << " ";
 	std::cout << root->data << "\n";
 
-	// Process left child  
 	print2DUtil(root->left, space);
 }
 
@@ -196,8 +189,9 @@ int main() {
 	p.push_back({ "Spain","Madrid" });
 	p.push_back({ "Russia","Moscow" });
 	p.push_back({ "Italy","Rome" });
+	p.push_back({ "Georgia", "Tbilisi" });
 
-	OptimalBST<WorldMap> tree(p, { 0, 0.15, 0.1, 0.05, 0.1, 0.2 }, { 0.05, 0.1, 0.05, 0.05, 0.05, 0.1 }, 5);
+	OptimalBST<WorldMap> tree(p, { 0, 0.15, 0.1, 0.05, 0.1, 0.2, 0.3 }, { 0.05, 0.1, 0.05, 0.05, 0.05, 0.1, 0.05 }, 6);
 
 	std::cout << tree.getWebGraphviz();
 
