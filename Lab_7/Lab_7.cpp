@@ -151,29 +151,72 @@ public:
 		head = heapUnion(this, insertion);
 	}
 
-	void printHeap() {
-		Node<T>* currPtr = head;
-		while (currPtr != nullptr) {
-			std::cout << "B" << currPtr->degree << std::endl;
-			std::cout << "There are " << std::pow(2, currPtr->degree) << " nodes in this tree" << std::endl;
-			std::cout << "The level order traversal is" << std::endl;
-			std::queue<Node<T>*> q;
-			q.push(currPtr);
-			while (!q.empty()) {
-				Node<T>* p = q.front();
-				q.pop();
-				std::cout << p->key << " ";
+	Node<T>* extractMin() {
+		Node<T>* min = head;
+		Node<T>* current = head;
+		Node<T>* preNode = nullptr;
 
-				if (p->child != nullptr) {
-					Node<T>* tempPtr = p->child;
-					while (tempPtr != nullptr) {
-						q.push(tempPtr);
-						tempPtr = tempPtr->sibling;
-					}
-				}
+		while (current != nullptr) {
+			if (current->sibling != nullptr && current->sibling->key < min->key) {
+				preNode = current;
 			}
-			currPtr = currPtr->sibling;
-			std::cout << std::endl << std::endl;
+			if (current->key < min->key) {
+				min = current;
+			}
+			current = current->sibling;
+		}
+
+		if (preNode != nullptr) {
+			preNode->sibling = min->sibling;
+		}
+
+		current = min->child;
+		std::vector<Node<T>*> reverse;
+
+		while (current != nullptr) {
+			current->parent = nullptr;
+			reverse.push_back(current);
+			current = current->sibling;
+		}
+
+		std::reverse(reverse.begin(), reverse.end());
+
+		reverse[reverse.size() - 1]->sibling = nullptr;
+
+		for (int i = 0; i < reverse.size()-1; ++i) {
+			reverse[i]->sibling = reverse[i + 1];
+		}
+
+		BinomialHeap<T>* extractor = new BinomialHeap<T>();
+		extractor->createEmpty();
+		extractor->head = reverse[0];
+
+		head = heapUnion(this, extractor);
+		return min;
+	}
+
+	Node<T>* recursiveReverse(Node<T>* begin) {
+		if (begin == nullptr) {
+			begin->parent = nullptr;
+			
+		}
+	}
+
+	void decreaseKey(Node<T>* x, T k) {
+		if (k > x->key) {
+			return;
+		}
+
+		x->key = k;
+		Node<T>* y = x;
+		Node<T>* z = y->parent;
+
+		while (z != nullptr && y->key < z->key) {
+			T temp = y->key;
+			y->key = z->key;
+			z->key = temp;
+			y = z;
+			z = y->parent;
 		}
 	}
 
@@ -309,9 +352,23 @@ int main() {
 
 	BinomialHeap<int>* result = new BinomialHeap<int>(newHead);
 
-	std::cout << result->getWebGraphviz();
+	std::cout << result->getWebGraphviz() << std::endl;
 
-	system("pause");
+	result->insert(5);
+
+	std::cout << result->getWebGraphviz() << std::endl;
+
+	result->insert(100);
+
+	std::cout << result->getWebGraphviz() << std::endl;
+
+	std::cout << "\nMinimum: " << result->extractMin()->key << "\n\n";
+
+	std::cout << result->getWebGraphviz() << std::endl;
+
+	Node<int>* toDecrease = new Node<int>(22);
+
+	system("pause >> void");
 
 	return 0;
 }
