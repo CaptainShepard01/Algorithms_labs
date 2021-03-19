@@ -7,16 +7,60 @@
 #include <stack>
 #include <cmath>
 
+struct WorldMap {
+	std::string country;
+	std::string city;
+
+	WorldMap(std::string country, std::string city)
+		:country(country),
+		city(city) {};
+
+	WorldMap(std::string city)
+		:city(city) {};
+
+	WorldMap() {};
+
+	bool operator <(const WorldMap& rhs) const {
+		return this->city < rhs.city;
+	}
+
+	bool operator >(const WorldMap& rhs)const {
+		return this->city > rhs.city;
+	}
+
+	bool operator ==(const WorldMap& rhs)const {
+		return this->city == rhs.city;
+	}
+
+	bool operator <=(const WorldMap& rhs)const {
+		return this->city <= rhs.city;
+	}
+};
+
+std::ostream& operator<<(std::ostream& os, const WorldMap& v) {
+	os << '(';
+
+	if (v.city != "") {
+		os << " Country: " << v.country << ", City: " << v.city;
+		//os << v.city;
+	}
+
+	os << " )";
+	return os;
+}
+
+#define MIN_INFINITY WorldMap("");
+#define NUMERIC_MIN_INFINITY std::numeric_limits<int>::min();
 
 template<typename T>
 struct Node {
-	int key = 0;
+	T key;
 	Node* parent = nullptr;
 	Node* child = nullptr;
 	Node* sibling = nullptr;
 	int degree = 0;
 
-	Node(int key) :key(key) {}
+	Node(T key) :key(key) {}
 	Node() {};
 };
 
@@ -24,6 +68,38 @@ template <typename T>
 class BinomialHeap {
 private:
 	Node<T>* head = nullptr;
+
+	void getGraphInfo(Node<T>* x, std::string& text) {
+		if (x != nullptr) {
+			if (x->child != nullptr)
+				text += "\"" + std::to_string(x->key) + "\"" + " -> " + "\"" + std::to_string(x->child->key) + "\";\n";
+			if (x->sibling != nullptr)
+				text += "\"" + std::to_string(x->key) + "\"" + " -> " + "\"" + std::to_string(x->sibling->key) + "\";\n";
+			if (x->parent != nullptr)
+				text += "\"" + std::to_string(x->key) + "\"" + " -> " + "\"" + std::to_string(x->parent->key) + "\";\n";
+
+			getGraphInfo(x->child, text);
+			getGraphInfo(x->sibling, text);
+		}
+	}
+
+	Node<T>* search(std::string k, Node<T>* H) {
+		Node<T>* x = H;
+		Node<T>* p = nullptr;
+
+		if (x->key.city == k) {
+			p = x;
+			return p;
+		}
+
+		if (x->child != nullptr && p == nullptr)
+			p = search(k, x->child);
+
+		if (x->sibling != nullptr && p == nullptr)
+			p = search(k, x->sibling);
+
+		return p;
+	}
 
 public:
 	BinomialHeap() {};
@@ -36,7 +112,8 @@ public:
 	Node<T>* minimum() {
 		Node<T>* y = nullptr;
 		Node<T>* x = head;
-		T min = INT_MIN;
+
+		T min = NUMERIC_MIN_INFINITY;
 
 		while (x != nullptr) {
 			if (x->key < min) {
@@ -183,7 +260,7 @@ public:
 
 		reverse[reverse.size() - 1]->sibling = nullptr;
 
-		for (int i = 0; i < reverse.size()-1; ++i) {
+		for (int i = 0; i < reverse.size() - 1; ++i) {
 			reverse[i]->sibling = reverse[i + 1];
 		}
 
@@ -195,19 +272,14 @@ public:
 		return min;
 	}
 
-	Node<T>* recursiveReverse(Node<T>* begin) {
-		if (begin == nullptr) {
-			begin->parent = nullptr;
-			
-		}
-	}
+	void decreaseKey(std::string toChange, std::string k) {
+		Node<T>* x = find(toChange);
 
-	void decreaseKey(Node<T>* x, T k) {
-		if (k > x->key) {
+		if (k > x->key.city) {
 			return;
 		}
 
-		x->key = k;
+		x->key.city = k;
 		Node<T>* y = x;
 		Node<T>* z = y->parent;
 
@@ -220,20 +292,6 @@ public:
 		}
 	}
 
-	void getGraphInfo(Node<T>* x, std::string& text) {
-		if (x != nullptr) {
-			if (x->child != nullptr)
-				text += "\"" + std::to_string(x->key) + "\"" + " -> " + "\"" + std::to_string(x->child->key) + "\";\n";
-			if (x->sibling != nullptr)
-				text += "\"" + std::to_string(x->key) + "\"" + " -> " + "\"" + std::to_string(x->sibling->key) + "\";\n";
-			if (x->parent != nullptr)
-				text += "\"" + std::to_string(x->key) + "\"" + " -> " + "\"" + std::to_string(x->parent->key) + "\";\n";
-
-			getGraphInfo(x->child, text);
-			getGraphInfo(x->sibling, text);
-		}
-	}
-
 	std::string getWebGraphviz(std::string graphName = "G") {
 		std::string graphText = "digraph " + graphName + " {\n";
 
@@ -241,10 +299,47 @@ public:
 
 		return graphText += "}";
 	}
+
+	Node<T>* find(std::string k) {
+		return search(k, head);
+	}
 };
 
+template<>
+Node<WorldMap>* BinomialHeap<WorldMap> ::minimum() {
+	Node<WorldMap>* y = nullptr;
+	Node<WorldMap>* x = head;
+
+	WorldMap min = MIN_INFINITY;
+
+	while (x != nullptr) {
+		if (x->key < min) {
+			min = x->key;
+			y = x;
+		}
+		x = x->sibling;
+	}
+
+	return y;
+}
+
+template<>
+void BinomialHeap<WorldMap> ::getGraphInfo(Node<WorldMap>* x, std::string& text) {
+	if (x != nullptr) {
+		if (x->child != nullptr)
+			text += "\"" + x->key.city + "\"" + " -> " + "\"" + x->child->key.city + "\";\n";
+		if (x->sibling != nullptr)
+			text += "\"" + x->key.city + "\"" + " -> " + "\"" + x->sibling->key.city + "\";\n";
+		if (x->parent != nullptr)
+			text += "\"" + x->key.city + "\"" + " -> " + "\"" + x->parent->key.city + "\";\n";
+
+		getGraphInfo(x->child, text);
+		getGraphInfo(x->sibling, text);
+	}
+}
+
 int main() {
-	Node<int>* first = new Node<int>(12);
+	/*Node<int>* first = new Node<int>(12);
 	Node<int>* second = new Node<int>(7);
 	Node<int>* third = new Node<int>(25);
 	Node<int>* fourth = new Node<int>(15);
@@ -367,6 +462,37 @@ int main() {
 	std::cout << result->getWebGraphviz() << std::endl;
 
 	Node<int>* toDecrease = new Node<int>(22);
+
+	system("pause >> void");*/
+
+
+	BinomialHeap<WorldMap> anotherOne;
+
+	anotherOne.insert({ "Spain", "Barcelona" });
+
+	anotherOne.insert({ "Ukraine","Varash" });
+
+	anotherOne.insert({ "Spain","Madrid" });
+	anotherOne.insert({ "Russia","Mahachkala" });
+	anotherOne.insert({ "China","Beijing" });
+	anotherOne.insert({ "Madagaskar","Antananarivo" });
+	anotherOne.insert({ "Columbia","Pictures" });
+	anotherOne.insert({ "USA","Omerica" });
+	anotherOne.insert({ "Canada","Coldcity" });
+	anotherOne.insert({ "Tajikistan","Dushanbe" });
+	anotherOne.insert({ "India","New Delhi" });
+
+
+	std::cout << anotherOne.getWebGraphviz() << std::endl;
+
+	std::cout << "\nMinimum: " << anotherOne.extractMin()->key << std::endl << std::endl;
+
+	std::cout << anotherOne.getWebGraphviz() << std::endl;
+
+	std::cout << "\nDecreasing key:\n\n";
+	anotherOne.decreaseKey("Coldcity", "Aaaaaa ColdCity");
+
+	std::cout << anotherOne.getWebGraphviz() << std::endl;
 
 	system("pause >> void");
 
