@@ -26,5 +26,8 @@
     <ClInclude Include="RBTree.hxx">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="WorldMap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

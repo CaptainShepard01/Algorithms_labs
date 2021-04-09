@@ -315,6 +315,12 @@ public:
 		heapUnionWithThis(insertion);
 	}
 
+	void remove(std::string toDelete) {
+		decreaseKey(toDelete, "");
+
+		extractMin();
+	}
+
 	Node<T>* extractMin() {
 		Node<T>* min = head;
 		Node<T>* current = head;

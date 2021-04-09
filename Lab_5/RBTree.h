@@ -4,6 +4,8 @@
 #include <iomanip>
 #include <stack>
 #include <string>
+#include <vector>
+#include "WorldMap.h"
 
 enum Color { RED, BLACK };
 
@@ -62,12 +64,13 @@ class RBTree {
 	treeNode<T>* treeSearch(treeNode<T>* x, const T& key);
 
 	void getGraphInfo(treeNode<T>* x, std::string& text);
+	void getGraphInfoPersistent(treeNode<T>* x, std::string& text, int gen);
 
 public:
-	std::stack<treeNode<T>*> persistentRoots;
+	std::vector<treeNode<T>*> persistentRoots;
 
 	RBTree();
-	RBTree(const std::initializer_list<T>& list);
+	RBTree(const std::initializer_list<T>& list, bool isPersistent = false);
 
 	void skipBack();
 	void clear(treeNode<T>* x, int gen);
@@ -78,6 +81,7 @@ public:
 	friend std::ostream& operator<<(std::ostream& os, RBTree<U>& tree);
 
 	std::string getWebGraphviz(std::string graphName = "G");
+	std::string getWebGraphvizPersistent(std::string graphName = "G");
 
 	void insert(const T& item);
 	void insertPersistent(const T& item);
