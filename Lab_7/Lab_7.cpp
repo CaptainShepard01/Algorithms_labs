@@ -6,6 +6,7 @@
 #include <queue>
 #include <stack>
 #include <cmath>
+#include <exception>
 
 struct WorldMap {
 	std::string country;
@@ -183,6 +184,57 @@ public:
 		return newHead;
 	}
 
+	void mergeToThis(BinomialHeap<T>* anotherOne) {
+		Node<T>* h1Node = head;
+		Node<T>* h2Node = anotherOne->head;
+		Node<T>* newHead = new Node<T>;
+		Node<T>* iterator = new Node<T>;
+		if (h1Node != nullptr && h2Node != nullptr) {
+			if (h1Node->degree <= h2Node->degree) {
+				newHead = h1Node;
+				h1Node = h1Node->sibling;
+			}
+			else {
+				newHead = h2Node;
+				h2Node = h2Node->sibling;
+			}
+		}
+		else if (h1Node != nullptr) {
+			return;
+		}
+		else if (h2Node != nullptr) {
+			head = h2Node;
+			return;
+		}
+		else {
+			throw std::exception("A zachem?");
+		}
+
+		iterator = newHead;
+
+		while (h1Node != nullptr && h2Node != nullptr) {
+			if (h1Node->degree <= h2Node->degree) {
+				iterator->sibling = h1Node;
+				iterator = h1Node;
+				h1Node = h1Node->sibling;
+			}
+			else {
+				iterator->sibling = h2Node;
+				iterator = h2Node;
+				h2Node = h2Node->sibling;
+			}
+		}
+
+		if (h2Node != nullptr) {
+			iterator->sibling = h2Node;
+		}
+		else if (h1Node != nullptr) {
+			iterator->sibling = h1Node;
+		}
+
+		head = newHead;
+	}
+
 	Node<T>* heapUnion(BinomialHeap<T>* h1, BinomialHeap<T>* h2) {
 		BinomialHeap<T>* h = new BinomialHeap<T>();
 		h->createEmpty();
@@ -220,12 +272,47 @@ public:
 		return h->head;
 	}
 
+	void heapUnionWithThis(BinomialHeap<T>* anotherOne) {
+		mergeToThis(anotherOne);
+
+		if (head == nullptr) {
+			return;
+		}
+
+		Node<T>* prev_x = nullptr;
+		Node<T>* x = head;
+		Node<T>* next_x = x->sibling;
+
+		while (next_x != nullptr) {
+			if ((x->degree != next_x->degree) || (next_x->sibling != nullptr && next_x->sibling->degree == x->degree)) {
+				prev_x = x;
+				x = next_x;
+			}
+			else if (x->key <= next_x->key) {
+				x->sibling = next_x->sibling;
+				binominalLink(next_x, x);
+			}
+			else {
+				if (prev_x == nullptr) {
+					head = next_x;
+				}
+				else {
+					prev_x->sibling = next_x;
+				}
+				binominalLink(x, next_x);
+				x = next_x;
+			}
+			next_x = x->sibling;
+		}
+		return;
+	}
+
 	void insert(T x) {
 		BinomialHeap<T>* insertion = new BinomialHeap<T>();
 		insertion->createEmpty();
 		insertion->head->key = x;
 
-		head = heapUnion(this, insertion);
+		heapUnionWithThis(insertion);
 	}
 
 	Node<T>* extractMin() {
@@ -268,12 +355,16 @@ public:
 		extractor->createEmpty();
 		extractor->head = reverse[0];
 
-		head = heapUnion(this, extractor);
+		heapUnionWithThis(extractor);
 		return min;
 	}
 
 	void decreaseKey(std::string toChange, std::string k) {
 		Node<T>* x = find(toChange);
+
+		if (x == nullptr) {
+			return;
+		}
 
 		if (k > x->key.city) {
 			return;
@@ -346,24 +437,35 @@ int main() {
 	anotherOne.insert({ "Ukraine","Varash" });
 
 	anotherOne.insert({ "Spain","Madrid" });
-	anotherOne.insert({ "Russia","Mahachkala" });
-	anotherOne.insert({ "China","Beijing" });
-	anotherOne.insert({ "Madagaskar","Antananarivo" });
-	anotherOne.insert({ "Columbia","Pictures" });
-	anotherOne.insert({ "USA","Omerica" });
-	anotherOne.insert({ "Canada","Coldcity" });
-	anotherOne.insert({ "Tajikistan","Dushanbe" });
-	anotherOne.insert({ "India","New Delhi" });
 
+	BinomialHeap<WorldMap> anotherOne1;
+	anotherOne1.insert({ "Russia","Mahachkala" });
+	anotherOne1.insert({ "China","Beijing" });
+	anotherOne1.insert({ "Madagaskar","Antananarivo" });
+	anotherOne1.insert({ "Columbia","Pictures" });
+	anotherOne1.insert({ "USA","Omerica" });
+	anotherOne1.insert({ "Canada","Coldcity" });
+	anotherOne1.insert({ "Tajikistan","Dushanbe" });
+	anotherOne1.insert({ "India","New Delhi" });
+
+
+	//std::cout << anotherOne.getWebGraphviz() << std::endl;
+	//
+	//std::cout << "\nMinimum: " << anotherOne.extractMin()->key << std::endl << std::endl;
+	//
+	//std::cout << anotherOne.getWebGraphviz() << std::endl;
+	//
+	//std::cout << "\nDecreasing key:\n\n";
+	//anotherOne.decreaseKey("Coldcity", "Aaaaaa ColdCity");
+	//
+	//std::cout << anotherOne.getWebGraphviz() << std::endl;
+	//
+	//anotherOne.decreaseKey("America", "Aaaaaaaa");
 
 	std::cout << anotherOne.getWebGraphviz() << std::endl;
+	std::cout << anotherOne1.getWebGraphviz() << std::endl;
 
-	std::cout << "\nMinimum: " << anotherOne.extractMin()->key << std::endl << std::endl;
-
-	std::cout << anotherOne.getWebGraphviz() << std::endl;
-
-	std::cout << "\nDecreasing key:\n\n";
-	anotherOne.decreaseKey("Coldcity", "Aaaaaa ColdCity");
+	anotherOne.heapUnionWithThis(&anotherOne1);
 
 	std::cout << anotherOne.getWebGraphviz() << std::endl;
 

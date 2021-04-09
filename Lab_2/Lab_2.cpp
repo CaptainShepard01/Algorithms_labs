@@ -459,42 +459,46 @@ public:
 };
 
 int main() {
-	RBTree<WorldMap> tree;
+	RBTree<int> tree{ 5,76,22,365,666 };
+	
+	std::cout << tree;
 
-	tree.insert({ "Italy","Rome" });
-	std::cout << tree << std::endl;
-	tree.insert({ "Spain","Madrid" });
-	std::cout << tree << std::endl;
-	tree.insert({ "Ukraine","Kyiv" });
-	std::cout << tree << std::endl;
-	tree.insert({ "Spain","Barcelona" });
-	std::cout << tree << std::endl;
-	tree.insert({ "Russia","Moscow" });
-	std::cout << tree << std::endl;
-	tree.insert({ "Italy","Neapol" });
-
-	std::cout << tree << std::endl;
-
-	std::cout << std::endl;
-
-	tree.remove({ "Ukraine","Kyiv" });
-
-	std::cout << tree << std::endl;
-	tree.insert({ "USA","New-York" });
-
-	std::cout << tree << std::endl;
-
-	std::cout << "Order statistic: " << std::endl;
-
-	for (int i = 0; i < tree.size(); ++i) {
-		std::cout << i << ": " << tree[i] << std::endl;
-	}
-
-	try {
-		std::cout << tree[-1] << std::endl;
-		std::cout << tree[100] << std::endl;
-	}
-	catch (std::exception& e) {
-		std::cout << e.what() << std::endl;
-	}
+	//RBTree<WorldMap> tree;
+	//
+	//tree.insert({ "Italy","Rome" });
+	//std::cout << tree << std::endl;
+	//tree.insert({ "Spain","Madrid" });
+	//std::cout << tree << std::endl;
+	//tree.insert({ "Ukraine","Kyiv" });
+	//std::cout << tree << std::endl;
+	//tree.insert({ "Spain","Barcelona" });
+	//std::cout << tree << std::endl;
+	//tree.insert({ "Russia","Moscow" });
+	//std::cout << tree << std::endl;
+	//tree.insert({ "Italy","Neapol" });
+	//
+	//std::cout << tree << std::endl;
+	//
+	//std::cout << std::endl;
+	//
+	//tree.remove({ "Ukraine","Kyiv" });
+	//
+	//std::cout << tree << std::endl;
+	//tree.insert({ "USA","New-York" });
+	//
+	//std::cout << tree << std::endl;
+	//
+	//std::cout << "Order statistic: " << std::endl;
+	//
+	//for (int i = 0; i < tree.size(); ++i) {
+	//	std::cout << i << ": " << tree[i] << std::endl;
+	//}
+	//
+	//try {
+	//	std::cout << tree[-1] << std::endl;
+	//	std::cout << tree[100] << std::endl;
+	//}
+	//catch (std::exception& e) {
+	//	std::cout << e.what() << std::endl;
+	//}
 }
