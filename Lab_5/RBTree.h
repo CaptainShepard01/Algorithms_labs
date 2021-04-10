@@ -14,6 +14,9 @@ struct treeNode;
 
 template <typename T>
 struct treeNode {
+	int ID;
+	static int number;
+
 	T key;
 	Color color = BLACK;
 	treeNode* parent = nullptr;
@@ -22,28 +25,18 @@ struct treeNode {
 	size_t descendants = 0;
 	int generation = 0; //defines persistent set generation for this node to delete it corectly while skipping back
 
-	treeNode() {};
+	treeNode():ID(number++) {};
 };
 
-template <typename T>
-treeNode<T>* copy(treeNode<T>* origin) {
-	auto destination = new treeNode<T>();
-
-	destination->key = origin->key;
-	destination->color = origin->color;
-	destination->parent = origin->parent;
-	destination->left = origin->left;
-	destination->right = origin->right;
-	destination->generation = origin->generation + 1;
-	destination->descendants = origin->descendants;
-
-	return destination;
-}
+template<typename T>
+int treeNode<T>::number = 0;
 
 template <typename T>
 class RBTree {
 	treeNode<T>* nill;
 	treeNode<T>* root;
+
+	treeNode<T>* copy(treeNode<T>* origin);
 
 	void leftRotate(treeNode<T>* x);
 	void rightRotate(treeNode<T>* x);

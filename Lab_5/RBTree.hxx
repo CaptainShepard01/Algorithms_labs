@@ -25,6 +25,25 @@ RBTree<T>::RBTree(const std::initializer_list<T>& list, bool isPersistent) {
 		persistentRoots.push_back(root);
 }
 
+template <typename T>
+treeNode<T>* RBTree<T>::copy(treeNode<T>* origin) {
+	if (origin == nill) {
+		return origin;
+	}
+
+	auto destination = new treeNode<T>();
+
+	destination->key = origin->key;
+	destination->color = origin->color;
+	destination->parent = origin->parent;
+	destination->left = origin->left;
+	destination->right = origin->right;
+	destination->generation = root->generation;
+	destination->descendants = origin->descendants;
+
+	return destination;
+}
+
 template<typename T>
 void RBTree<T>::leftRotate(treeNode<T>* x) {
 	treeNode<T>* y = x->right;
@@ -152,11 +171,9 @@ void RBTree<T>::insertFixupPersistent(treeNode<T>* z) {
 	while (z->parent->color == RED) {
 		if (z->parent == z->parent->parent->left) {
 
-			if (z->parent->parent->right != nill) {
-				auto newUncle = copy(z->parent->parent->right);
-				newUncle->parent = z->parent->parent;
-				z->parent->parent->right = newUncle;
-			}
+			auto newUncle = copy(z->parent->parent->right);
+			newUncle->parent = z->parent->parent;
+			z->parent->parent->right = newUncle;
 
 			y = z->parent->parent->right;
 			if (y->color == RED) {
@@ -167,11 +184,10 @@ void RBTree<T>::insertFixupPersistent(treeNode<T>* z) {
 			}
 			else {
 				if (z == z->parent->right) {
-					if (z->left != nill) {
-						auto newLeft = copy(z->left);
-						newLeft->parent = z;
-						z->left = newLeft;
-					}
+
+					auto newLeft = copy(z->left);
+					newLeft->parent = z;
+					z->left = newLeft;
 
 					z = z->parent;
 					leftRotate(z);
@@ -179,21 +195,18 @@ void RBTree<T>::insertFixupPersistent(treeNode<T>* z) {
 				z->parent->color = BLACK;
 				z->parent->parent->color = RED;
 
-				if (z->parent->right != nill) {
-					auto newRight = copy(z->parent->right);
-					newRight->parent = z->parent;
-					z->parent->right = newRight;
-				}
+				auto newRight = copy(z->parent->right);
+				newRight->parent = z->parent;
+				z->parent->right = newRight;
 
 				rightRotate(z->parent->parent);
 			}
 		}
 		else {
-			if (z->parent->parent->left != nill) {
-				auto newUncle = copy(z->parent->parent->left);
-				newUncle->parent = z->parent->parent;
-				z->parent->parent->left = newUncle;
-			}
+
+			auto newUncle = copy(z->parent->parent->left);
+			newUncle->parent = z->parent->parent;
+			z->parent->parent->left = newUncle;
 
 			y = z->parent->parent->left;
 			if (y->color == RED) {
@@ -204,11 +217,10 @@ void RBTree<T>::insertFixupPersistent(treeNode<T>* z) {
 			}
 			else {
 				if (z == z->parent->left) {
-					if (z->right != nill) {
-						auto newRight = copy(z->right);
-						newRight->parent = z;
-						z->right = newRight;
-					}
+
+					auto newRight = copy(z->right);
+					newRight->parent = z;
+					z->right = newRight;
 
 					z = z->parent;
 					rightRotate(z);
@@ -216,11 +228,9 @@ void RBTree<T>::insertFixupPersistent(treeNode<T>* z) {
 				z->parent->color = BLACK;
 				z->parent->parent->color = RED;
 
-				if (z->parent->left != nill) {
-					auto newLeft = copy(z->parent->left);
-					newLeft->parent = z->parent;
-					z->parent->left = newLeft;
-				}
+				auto newLeft = copy(z->parent->left);
+				newLeft->parent = z->parent;
+				z->parent->left = newLeft;
 
 				leftRotate(z->parent->parent);
 			}
@@ -295,25 +305,20 @@ void RBTree<T>::removeFixupPersistent(treeNode<T>* x) {
 	while (x != root && x->color == BLACK) {
 		treeNode<T>* w;
 		if (x == x->parent->left) {
-			if (x->parent->right != nill) {
-				auto newW = copy(x->parent->right);
-				newW->parent = x->parent;
-				x->parent->right = newW;
-				w = newW;
-			}
-			else
-				w = nill;
+
+			auto newW = copy(x->parent->right);
+			newW->parent = x->parent;
+			x->parent->right = newW;
+			w = newW;
 
 			//w = x->parent->right;
 			if (w->color == RED) {
 				w->color = BLACK;
 				x->parent->color = RED;
 
-				if (w->left != nill) {
-					auto newLeft = copy(w->left);
-					w->left = newLeft;
-					newLeft->parent = w;
-				}
+				auto newLeft = copy(w->left);
+				w->left = newLeft;
+				newLeft->parent = w;
 
 				leftRotate(x->parent);
 				w = x->parent->right;
@@ -325,17 +330,13 @@ void RBTree<T>::removeFixupPersistent(treeNode<T>* x) {
 			else {
 				if (w->right->color == BLACK) {
 
-					if (w->left != nill) {
-						auto newLeft = copy(w->left);
-						w->left = newLeft;
-						newLeft->parent = w;
-					}
+					auto newLeft = copy(w->left);
+					w->left = newLeft;
+					newLeft->parent = w;
 
-					if (w->left->right != nill) {
-						auto newRight = copy(w->left->right);
-						w->left->right = newRight;
-						newRight->parent = w->left;
-					}
+					auto newRight = copy(w->left->right);
+					w->left->right = newRight;
+					newRight->parent = w->left;
 
 					w->left->color = BLACK;
 					w->color = RED;
@@ -344,17 +345,13 @@ void RBTree<T>::removeFixupPersistent(treeNode<T>* x) {
 				}
 				w->color = x->parent->color;
 
-				if (w->left != nill) {
-					auto newLeft = copy(w->left);
-					w->left = newLeft;
-					newLeft->parent = w;
-				}
+				auto newLeft = copy(w->left);
+				w->left = newLeft;
+				newLeft->parent = w;
 
-				if (w->right != nill) {
-					auto newRight = copy(w->right);
-					w->right = newRight;
-					newRight->parent = w;
-				}
+				auto newRight = copy(w->right);
+				w->right = newRight;
+				newRight->parent = w;
 
 				x->parent->color = BLACK;
 				w->right->color = BLACK;
@@ -363,24 +360,20 @@ void RBTree<T>::removeFixupPersistent(treeNode<T>* x) {
 			}
 		}
 		else {
-			if (x->parent->left != nill) {
-				auto newW = copy(x->parent->left);
-				newW->parent = x->parent;
-				x->parent->left = newW;
-				w = newW;
-			}
-			else
-				w = nill;
+
+			auto newW = copy(x->parent->left);
+			newW->parent = x->parent;
+			x->parent->left = newW;
+			w = newW;
+
 			//w = x->parent->left;
 			if (w->color == RED) {
 				w->color = BLACK;
 				x->parent->color = RED;
 
-				if (w->right != nill) {
-					auto newRight = copy(w->right);
-					w->right = newRight;
-					newRight->parent = w;
-				}
+				auto newRight = copy(w->right);
+				w->right = newRight;
+				newRight->parent = w;
 
 				rightRotate(x->parent);
 				w = x->parent->left;
@@ -392,17 +385,13 @@ void RBTree<T>::removeFixupPersistent(treeNode<T>* x) {
 			else {
 				if (w->left->color == BLACK) {
 
-					if (w->right != nill) {
-						auto newRight = copy(w->right);
-						w->right = newRight;
-						newRight->parent = w;
-					}
+					auto newRight = copy(w->right);
+					w->right = newRight;
+					newRight->parent = w;
 
-					if (w->right->left != nill) {
-						auto newLeft = copy(w->right->left);
-						w->right->left = newLeft;
-						newLeft->parent = w->right;
-					}
+					auto newLeft = copy(w->right->left);
+					w->right->left = newLeft;
+					newLeft->parent = w->right;
 
 					w->right->color = BLACK;
 					w->color = RED;
@@ -411,17 +400,13 @@ void RBTree<T>::removeFixupPersistent(treeNode<T>* x) {
 				}
 				w->color = x->parent->color;
 
-				if (w->right != nill) {
-					auto newRight = copy(w->right);
-					w->right = newRight;
-					newRight->parent = w;
-				}
+				auto newRight = copy(w->right);
+				w->right = newRight;
+				newRight->parent = w;
 
-				if (w->left != nill) {
-					auto newLeft = copy(w->left);
-					w->left = newLeft;
-					newLeft->parent = w;
-				}
+				auto newLeft = copy(w->left);
+				w->left = newLeft;
+				newLeft->parent = w;
 
 				x->parent->color = BLACK;
 				w->left->color = BLACK;
@@ -574,6 +559,7 @@ void RBTree<T>::insertPersistent(const T& item) {
 		auto newRoot = copy(root);
 		persistentRoots.push_back(newRoot);
 		root = newRoot;
+		root->generation++;
 	}
 
 	treeNode<T>* z = new treeNode<T>();
@@ -598,7 +584,7 @@ void RBTree<T>::insertPersistent(const T& item) {
 		y = x;
 		x->descendants++;
 
-		if (z->key < x->key) {
+		if (z->key <= x->key) {
 			x = x->left;
 		}
 		else {
@@ -612,7 +598,7 @@ void RBTree<T>::insertPersistent(const T& item) {
 		root = z;
 	}
 	else {
-		if (z->key < y->key) {
+		if (z->key <= y->key) {
 			y->left = z;
 		}
 		else {
@@ -646,6 +632,7 @@ treeNode<T>* RBTree<T>::treeSearchPersistent(const T& key) {
 		auto newRoot = copy(root);
 		persistentRoots.push_back(newRoot);
 		root = newRoot;
+		root->generation++;
 	}
 
 	treeNode<T>* pre = nill;
@@ -674,7 +661,7 @@ treeNode<T>* RBTree<T>::treeSearchPersistent(const T& key) {
 		}
 	}
 
-	if (iter != root && iter != nill) {
+	if (iter != root) {
 		auto newIter = copy(iter);
 		newIter->parent = pre;
 		if (pre->left == iter) {
@@ -781,19 +768,15 @@ treeNode<T>* RBTree<T>::removePersistent(const T& item) {
 
 	if (y->left != nill) {
 
-		if (y->left != nill) {
-			auto newLeft = copy(y->left);
-			y->left = newLeft;
-		}
+		auto newLeft = copy(y->left);
+		y->left = newLeft;
 
 		x = y->left;
 	}
 	else {
 
-		if (y->right != nill) {
-			auto newRight = copy(y->right);
-			y->right = newRight;
-		}
+		auto newRight = copy(y->right);
+		y->right = newRight;
 
 		x = y->right;
 	}
@@ -843,7 +826,7 @@ void RBTree<T>::skipBack() {
 	persistentRoots.pop_back();
 	clear(root, root->generation);
 
-	root = persistentRoots[persistentRoots.size()-1];
+	root = persistentRoots[persistentRoots.size() - 1];
 }
 
 template<typename T>
@@ -898,13 +881,13 @@ void RBTree<WorldMap>::getGraphInfo(treeNode<WorldMap>* x, std::string& text) {
 template<typename T>
 void RBTree<T>::getGraphInfoPersistent(treeNode<T>* x, std::string& text, int gen) {
 	if (x != nill) {
-		if (x->color == RED && x->generation = gen)
+		if (x->color == RED && x->generation <= gen)
 			text += "\"" + std::to_string(x->key) + ' ' + std::to_string(x->generation) + "\" [color = \"red\"];\n";
-		else if (x == root && x->generation = gen)
+		else if (x == root && x->generation <= gen)
 			text += "\"" + std::to_string(x->key) + ' ' + std::to_string(x->generation) + "\";\n";
-		if (x->left != nill && x->left->generation = gen)
+		if (x->left != nill && x->left->generation <= gen)
 			text += "\"" + std::to_string(x->key) + ' ' + std::to_string(x->generation) + "\"" + " -> " + "\"" + std::to_string(x->left->key) + ' ' + std::to_string(x->left->generation) + "\";\n";
-		if (x->right != nill && x->right->generation = gen)
+		if (x->right != nill && x->right->generation <= gen)
 			text += "\"" + std::to_string(x->key) + ' ' + std::to_string(x->generation) + "\"" + " -> " + "\"" + std::to_string(x->right->key) + ' ' + std::to_string(x->right->generation) + "\";\n";
 
 		getGraphInfo(x->left, text);
@@ -912,17 +895,21 @@ void RBTree<T>::getGraphInfoPersistent(treeNode<T>* x, std::string& text, int ge
 	}
 }
 
+std::string getText(treeNode<WorldMap>* x) {
+	return x->key.city + ' ' + std::to_string(x->generation) + " ID: " + std::to_string(x->ID);
+}
+
 template<>
 void RBTree<WorldMap>::getGraphInfoPersistent(treeNode<WorldMap>* x, std::string& text, int gen) {
 	if (x != nill) {
 		if (x->color == RED && x->generation <= gen)
-			text += "\"" + x->key.city + ' ' + std::to_string(x->generation) + "\" [color = \"red\"];\n";
+			text += "\"" + getText(x) + "\" [color = \"red\"];\n";
 		else if (x == root && x->generation <= gen)
-			text += "\"" + x->key.city + ' ' + std::to_string(x->generation) + "\";\n";
+			text += "\"" + getText(x) + "\";\n";
 		if (x->left != nill && x->left->generation <= gen)
-			text += "\"" + x->key.city + ' ' + std::to_string(x->generation) + "\"" + " -> " + "\"" + x->left->key.city + ' ' + std::to_string(x->left->generation) + "\";\n";
+			text += "\"" + getText(x) + "\"" + " -> " + "\"" + getText(x->left) + "\";\n";
 		if (x->right != nill && x->right->generation <= gen)
-			text += "\"" + x->key.city + ' ' + std::to_string(x->generation) + "\"" + " -> " + "\"" + x->right->key.city + ' ' + std::to_string(x->right->generation) + "\";\n";
+			text += "\"" + getText(x) + "\"" + " -> " + "\"" + getText(x->right) + "\";\n";
 
 		getGraphInfoPersistent(x->left, text, gen);
 		getGraphInfoPersistent(x->right, text, gen);
@@ -942,8 +929,8 @@ template<typename T>
 std::string RBTree<T>::getWebGraphvizPersistent(std::string graphName) {
 	std::string graphText = "digraph " + graphName + " {\n";
 
+	getGraphInfoPersistent(persistentRoots[persistentRoots.size() - 2], graphText, root->generation - 1);
 	getGraphInfoPersistent(root, graphText, root->generation);
-	getGraphInfoPersistent(persistentRoots[persistentRoots.size()-2], graphText, root->generation-1);
 
 	return graphText += "}";
 }
