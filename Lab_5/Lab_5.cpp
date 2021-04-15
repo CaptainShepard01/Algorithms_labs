@@ -17,8 +17,6 @@ int main()
 	std::cout << tree->getWebGraphvizPersistent() << "\n\n";
 
 	tree->insertPersistent({ "Russia", "Magadan" });
-	tree->insertPersistent({ "Russia", "Magadan" });
-	tree->insertPersistent({ "Russia", "Magadan" });
 	std::cout << "Add Magadan, Russia:\n\n";
 	std::cout << tree->getWebGraphvizPersistent() << "\n\n";
 

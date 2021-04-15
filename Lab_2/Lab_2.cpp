@@ -1,5 +1,6 @@
 ﻿#include <iostream>
 #include <exception>
+#include <string>
 
 struct WorldMap {
 	std::string country;
@@ -456,12 +457,39 @@ public:
 
 		return y;
 	}
+
+
+	std::string getWebGraphviz(std::string graphName = "G") {
+		std::string graphText = "digraph " + graphName + " {\n";
+
+		getGraphInfo(root, graphText);
+
+		return graphText += "}";
+	}
+
+	void getGraphInfo(treeNode<T>* x, std::string& text) {
+		if (x != nill) {
+			if (x->color == RED)
+				text += "\"" + std::to_string(x->key) + "\" [color = \"red\"];\n";
+			else if (x == root)
+				text += "\"" + std::to_string(x->key) + "\";\n";
+			if (x->left != nill)
+				text += "\"" + std::to_string(x->key) + "\"" + " -> " + "\"" + std::to_string(x->left->key) + "\";\n";
+			if (x->right != nill)
+				text += "\"" + std::to_string(x->key) + "\"" + " -> " + "\"" + std::to_string(x->right->key) + "\";\n";
+
+			getGraphInfo(x->left, text);
+			getGraphInfo(x->right, text);
+		}
+	}
+
+
+
 };
 
 int main() {
-	RBTree<int> tree{ 5,76,22,365,666 };
-	
-	std::cout << tree;
+	RBTree<int> tree{ -5, 10,0,15,4,22 };
+	std::cout << tree.getWebGraphviz();
 
 	//RBTree<WorldMap> tree;
 	//
