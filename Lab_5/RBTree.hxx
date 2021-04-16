@@ -237,6 +237,9 @@ void RBTree<T>::insertFixupPersistent(treeNode<T>* z) {
 		}
 	}
 
+	if (root != persistentRoots[root->generation])
+		persistentRoots[root->generation] = root;
+
 	root->color = BLACK;
 }
 
@@ -823,6 +826,8 @@ void RBTree<T>::clear(treeNode<T>* x, int gen) {
 
 template<typename T>
 void RBTree<T>::skipBack() {
+	if (persistentRoots.empty())
+		return;
 	persistentRoots.pop_back();
 	clear(root, root->generation);
 
@@ -878,38 +883,36 @@ void RBTree<WorldMap>::getGraphInfo(treeNode<WorldMap>* x, std::string& text) {
 	}
 }
 
+
 template<typename T>
-void RBTree<T>::getGraphInfoPersistent(treeNode<T>* x, std::string& text, int gen) {
-	if (x != nill) {
-		if (x->color == RED && x->generation <= gen)
-			text += "\"" + std::to_string(x->key) + ' ' + std::to_string(x->generation) + "\" [color = \"red\"];\n";
-		else if (x == root && x->generation <= gen)
-			text += "\"" + std::to_string(x->key) + ' ' + std::to_string(x->generation) + "\";\n";
-		if (x->left != nill && x->left->generation <= gen)
-			text += "\"" + std::to_string(x->key) + ' ' + std::to_string(x->generation) + "\"" + " -> " + "\"" + std::to_string(x->left->key) + ' ' + std::to_string(x->left->generation) + "\";\n";
-		if (x->right != nill && x->right->generation <= gen)
-			text += "\"" + std::to_string(x->key) + ' ' + std::to_string(x->generation) + "\"" + " -> " + "\"" + std::to_string(x->right->key) + ' ' + std::to_string(x->right->generation) + "\";\n";
-
-		getGraphInfo(x->left, text);
-		getGraphInfo(x->right, text);
-	}
-}
-
-std::string getText(treeNode<WorldMap>* x) {
-	return x->key.city + ' ' + std::to_string(x->generation) + " ID: " + std::to_string(x->ID);
+std::string RBTree<T>::getText(treeNode<T>* x) {
+	return std::to_string(x->key) + ' ' + std::to_string(x->generation) + " ID: " + std::to_string(x->ID);
 }
 
 template<>
-void RBTree<WorldMap>::getGraphInfoPersistent(treeNode<WorldMap>* x, std::string& text, int gen) {
+std::string RBTree<WorldMap>::getText(treeNode<WorldMap>* x) {
+	return x->key.city + ' ' + std::to_string(x->generation) + " ID: " + std::to_string(x->ID);
+}
+
+template<typename T>
+void RBTree<T>::getGraphInfoPersistent(treeNode<T>* x, std::string& text, int gen) {
+	std::string currentNodeText = getText(x);
+	std::stringstream stream;
+
+	stream << "\"" << currentNodeText << "\";\n";
+
 	if (x != nill) {
 		if (x->color == RED && x->generation <= gen)
-			text += "\"" + getText(x) + "\" [color = \"red\"];\n";
+			stream << "\"" << getText(x) << "\" [color = \"red\"];\n";
 		else if (x == root && x->generation <= gen)
-			text += "\"" + getText(x) + "\";\n";
+			stream << "\"" << getText(x) << "\";\n";
 		if (x->left != nill && x->left->generation <= gen)
-			text += "\"" + getText(x) + "\"" + " -> " + "\"" + getText(x->left) + "\";\n";
+			stream << "\"" << getText(x) << "\"" << " -> " << "\"" << getText(x->left) << "\";\n";
 		if (x->right != nill && x->right->generation <= gen)
-			text += "\"" + getText(x) + "\"" + " -> " + "\"" + getText(x->right) + "\";\n";
+			stream << "\"" << getText(x) << "\"" << " -> " << "\"" << getText(x->right) << "\";\n";
+
+		text += stream.str();
+		stream.str(std::string());
 
 		getGraphInfoPersistent(x->left, text, gen);
 		getGraphInfoPersistent(x->right, text, gen);
@@ -929,7 +932,8 @@ template<typename T>
 std::string RBTree<T>::getWebGraphvizPersistent(std::string graphName) {
 	std::string graphText = "digraph " + graphName + " {\n";
 
-	getGraphInfoPersistent(persistentRoots[persistentRoots.size() - 2], graphText, root->generation - 1);
+	if (persistentRoots.size() >= 2)
+		getGraphInfoPersistent(persistentRoots[persistentRoots.size() - 2], graphText, root->generation - 1);
 	getGraphInfoPersistent(root, graphText, root->generation);
 
 	return graphText += "}";

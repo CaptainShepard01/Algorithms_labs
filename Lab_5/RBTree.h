@@ -1,10 +1,11 @@
 #pragma once
-
 #include <iostream>
 #include <iomanip>
 #include <stack>
 #include <string>
 #include <vector>
+#include <string>
+#include <sstream>
 #include "WorldMap.h"
 
 enum Color { RED, BLACK };
@@ -35,6 +36,7 @@ template <typename T>
 class RBTree {
 	treeNode<T>* nill;
 	treeNode<T>* root;
+	std::vector<treeNode<T>*> persistentRoots;
 
 	treeNode<T>* copy(treeNode<T>* origin);
 
@@ -56,11 +58,11 @@ class RBTree {
 	treeNode<T>* treeMaximum(treeNode<T>* x);
 	treeNode<T>* treeSearch(treeNode<T>* x, const T& key);
 
+	std::string getText(treeNode<T>* x);
 	void getGraphInfo(treeNode<T>* x, std::string& text);
 	void getGraphInfoPersistent(treeNode<T>* x, std::string& text, int gen);
 
 public:
-	std::vector<treeNode<T>*> persistentRoots;
 
 	RBTree();
 	RBTree(const std::initializer_list<T>& list, bool isPersistent = false);
