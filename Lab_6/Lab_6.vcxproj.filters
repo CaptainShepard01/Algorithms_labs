@@ -18,10 +18,10 @@
     <ClInclude Include="..\Lab_5\WorldMap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="BPlusTree.h">
+    <ClInclude Include="BPTree.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="BPlusTree.hxx">
+    <ClInclude Include="BPTree.hxx">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

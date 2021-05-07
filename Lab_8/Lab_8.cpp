@@ -9,15 +9,17 @@
 #include <exception>
 #include <sstream>
 
+#include "../Lab_5/WorldMap.h"
+
 template<typename T>
-struct fibNode {
+struct node {
 	T key;
 
-	fibNode<T>* left = nullptr;
-	fibNode<T>* right = nullptr;
+	node<T>* left = nullptr;
+	node<T>* right = nullptr;
 
-	fibNode<T>* parent = nullptr;
-	fibNode<T>* child = nullptr;
+	node<T>* parent = nullptr;
+	node<T>* child = nullptr;
 
 	int degree = 0;
 	bool mark = false;
@@ -25,40 +27,34 @@ struct fibNode {
 	std::string getText();
 };
 
-/*template<typename T>
-struct DLCList {
-	fibNode<T>* head = nullptr;
-	int listNodes = 0;
-};*/
-
 template<typename T>
-class FibHeap {
+class FibbonacciHeap {
 private:
-	fibNode<T>* min;
+	node<T>* min;
 	int nodeCount;
 
-	void fibHeapInsert(fibNode<T>* x);
-	void insertToRootlist(fibNode<T>* x);
-	void insertToChildlist(fibNode<T>* parent, fibNode<T>* toInsert);
-	void rootListConcatenation(fibNode<T>* min2);
-	void deleteFromRootlist(fibNode<T>* toDelete);
-	void deleteFromChildlist(fibNode<T>* parent, fibNode<T>* child);
+	void fibbonacciInsert(node<T>* x);
+	void rootInsert(node<T>* x);
+	void childInsert(node<T>* parent, node<T>* toInsert);
+	void rootListConcatenation(node<T>* min2);
+	void deleteFromRootlist(node<T>* toDelete);
+	void deleteFromChildlist(node<T>* parent, node<T>* child);
 	void consolidate();
-	void fibHeapLink(fibNode<T>* y, fibNode<T>* x);
-	std::vector<fibNode<T>*> allMembers(fibNode<T>* current);
-	fibNode<T>* search(T value);
-	fibNode<T>* recursiveSearch(T value, fibNode<T>* current, fibNode<T>* result);
-	void cut(fibNode<T>* x, fibNode<T>* y);
-	void cascadingCut(fibNode<T>* y);
-	void getGraphInfo(fibNode<T>* x, std::string& text);
+	void fibHeapLink(node<T>* y, node<T>* x);
+	std::vector<node<T>*> allMembers(node<T>* current);
+	node<T>* search(T value);
+	node<T>* recursiveSearch(T value, node<T>* current, node<T>* result);
+	void cut(node<T>* x, node<T>* y);
+	void cascadingCut(node<T>* y);
+	void getGraphInfo(node<T>* x, std::string& text);
 
 public:
-	FibHeap();
-	FibHeap(const std::initializer_list<T>& list);
-	void fibHeapInsert(T value);
-	fibNode<T>* findMin();
-	FibHeap<T>* fibHeapUnion(FibHeap<T>* anotherHeap);
-	fibNode<T>* fibHeapExtractMin();
+	FibbonacciHeap();
+	FibbonacciHeap(const std::initializer_list<T>& list);
+	void fibbonacciInsert(T value);
+	node<T>* findMin();
+	FibbonacciHeap<T>* fibHeapUnion(FibbonacciHeap<T>* anotherHeap);
+	node<T>* fibHeapExtractMin();
 	void fibHeapDecreaseKey(T current, T decreased);
 	void fibHeapDelete(T value);
 	std::string getWebGraphviz(std::string graphName);
@@ -66,7 +62,7 @@ public:
 };
 
 template<typename T>
-void FibHeap<T>::getGraphInfo(fibNode<T>* x, std::string& text) {
+void FibbonacciHeap<T>::getGraphInfo(node<T>* x, std::string& text) {
 	if (x == nullptr)
 		return;
 
@@ -103,7 +99,7 @@ void FibHeap<T>::getGraphInfo(fibNode<T>* x, std::string& text) {
 }
 
 template<typename T>
-std::string FibHeap<T>::getWebGraphviz(std::string graphName) {
+std::string FibbonacciHeap<T>::getWebGraphviz(std::string graphName) {
 	std::string graphText = "digraph " + graphName + " {\n";
 
 	getGraphInfo(min, graphText);
@@ -112,7 +108,7 @@ std::string FibHeap<T>::getWebGraphviz(std::string graphName) {
 }
 
 template<typename T>
-std::string fibNode<T>::getText() {
+std::string node<T>::getText() {
 	std::stringstream result;
 
 	result << key;
@@ -121,38 +117,38 @@ std::string fibNode<T>::getText() {
 }
 
 template<typename T>
-FibHeap<T>::FibHeap() {
+FibbonacciHeap<T>::FibbonacciHeap() {
 	min = nullptr;
 	nodeCount = 0;
 }
 
 template<typename T>
-FibHeap<T>::FibHeap(const std::initializer_list<T>& list) {
+FibbonacciHeap<T>::FibbonacciHeap(const std::initializer_list<T>& list) {
 	min = nullptr;
 	nodeCount = 0;
 	for (const auto& item : list)
-		fibHeapInsert(item);
+		fibbonacciInsert(item);
 }
 
 template<typename T>
-void FibHeap<T>::fibHeapInsert(T value) {
-	fibNode<T>* newNode = new fibNode<T>;
+void FibbonacciHeap<T>::fibbonacciInsert(T value) {
+	node<T>* newNode = new node<T>;
 	newNode->key = value;
 
-	fibHeapInsert(newNode);
+	fibbonacciInsert(newNode);
 }
 
 template<typename T>
-fibNode<T>* FibHeap<T>::findMin() {
+node<T>* FibbonacciHeap<T>::findMin() {
 	return min;
 }
 
 template<typename T>
-FibHeap<T>* FibHeap<T>::fibHeapUnion(FibHeap<T>* anotherHeap) {
+FibbonacciHeap<T>* FibbonacciHeap<T>::fibHeapUnion(FibbonacciHeap<T>* anotherHeap) {
 	if (anotherHeap == nullptr)
 		return this;
 
-	FibHeap<T>* newHeap = new FibHeap<T>();
+	FibbonacciHeap<T>* newHeap = new FibbonacciHeap<T>();
 	newHeap->min = min;
 	newHeap->rootListConcatenation(anotherHeap->min);
 
@@ -165,20 +161,20 @@ FibHeap<T>* FibHeap<T>::fibHeapUnion(FibHeap<T>* anotherHeap) {
 }
 
 template<typename T>
-fibNode<T>* FibHeap<T>::fibHeapExtractMin() {
-	fibNode<T>* z = min;
+node<T>* FibbonacciHeap<T>::fibHeapExtractMin() {
+	node<T>* z = min;
 
 	if (z != nullptr) {
-		fibNode<T>* x = z->child;
+		node<T>* x = z->child;
 
 		if (x != nullptr) {
-			fibNode<T>* temp = x->right;
+			node<T>* temp = x->right;
 
-			insertToRootlist(x);
+			rootInsert(x);
 
 			for (x = temp; x != z->child; x = temp) {
 				temp = x->right;
-				insertToRootlist(x);
+				rootInsert(x);
 			}
 		}
 
@@ -196,19 +192,19 @@ fibNode<T>* FibHeap<T>::fibHeapExtractMin() {
 }
 
 template<typename T>
-void FibHeap<T>::fibHeapDecreaseKey(T current, T decreased) {
+void FibbonacciHeap<T>::fibHeapDecreaseKey(T current, T decreased) {
 	if (current <= decreased) {
 		return;
 	}
 
-	fibNode<T>* toChange = search(current);
+	node<T>* toChange = search(current);
 
 	if (toChange == nullptr) {
 		return;
 	}
 
 	toChange->key = decreased;
-	fibNode<T>* y = toChange->parent;
+	node<T>* y = toChange->parent;
 
 	if (y != nullptr && toChange->key < y->key) {
 		cut(toChange, y);
@@ -220,20 +216,20 @@ void FibHeap<T>::fibHeapDecreaseKey(T current, T decreased) {
 }
 
 template<typename T>
-void FibHeap<T>::fibHeapDelete(T value) {
+void FibbonacciHeap<T>::fibHeapDelete(T value) {
 	if (search(value) != nullptr) {
-		fibHeapDecreaseKey(value, INT_MIN);
+		fibHeapDecreaseKey(value, { "", "" });
 		delete fibHeapExtractMin();
 	}
 }
 
 template<typename T>
-void FibHeap<T>::rootListConcatenation(fibNode<T>* min2) {
+void FibbonacciHeap<T>::rootListConcatenation(node<T>* min2) {
 	if (min != nullptr && min2 != nullptr) {
 		min->left->right = min2;
 		min2->left->right = min;
 
-		fibNode<T>* temp = min->left;
+		node<T>* temp = min->left;
 
 		min->left = min2->left;
 		min2->left = temp;
@@ -241,7 +237,7 @@ void FibHeap<T>::rootListConcatenation(fibNode<T>* min2) {
 }
 
 template<typename T>
-void FibHeap<T>::deleteFromRootlist(fibNode<T>* toDelete) {
+void FibbonacciHeap<T>::deleteFromRootlist(node<T>* toDelete) {
 	if (toDelete->left == toDelete) {
 		min = nullptr;
 		return;
@@ -252,7 +248,7 @@ void FibHeap<T>::deleteFromRootlist(fibNode<T>* toDelete) {
 }
 
 template<typename T>
-void FibHeap<T>::deleteFromChildlist(fibNode<T>* parent, fibNode<T>* child) {
+void FibbonacciHeap<T>::deleteFromChildlist(node<T>* parent, node<T>* child) {
 	parent->child = child->right;
 
 	if (child->left == child) {
@@ -267,16 +263,16 @@ void FibHeap<T>::deleteFromChildlist(fibNode<T>* parent, fibNode<T>* child) {
 }
 
 template<typename T>
-void FibHeap<T>::consolidate() {
+void FibbonacciHeap<T>::consolidate() {
 	int size = (int)floor(log2(nodeCount)) + 1;
-	std::vector<fibNode<T>*> A(size, nullptr);
+	std::vector<node<T>*> A(size, nullptr);
 
 	for (auto item : allMembers(min)) {
-		fibNode<T>* x = item;
+		node<T>* x = item;
 		int d = x->degree;
 
 		while (A[d] != nullptr) {
-			fibNode<T>* y = A[d];
+			node<T>* y = A[d];
 
 			if (x->key > y->key) {
 				std::swap(x, y);
@@ -300,7 +296,7 @@ void FibHeap<T>::consolidate() {
 				min->right = min;
 			}
 			else {
-				insertToRootlist(item);
+				rootInsert(item);
 
 				if (item->key < min->key) {
 					min = item;
@@ -311,19 +307,19 @@ void FibHeap<T>::consolidate() {
 }
 
 template<typename T>
-void FibHeap<T>::fibHeapLink(fibNode<T>* y, fibNode<T>* x) {
+void FibbonacciHeap<T>::fibHeapLink(node<T>* y, node<T>* x) {
 	deleteFromRootlist(y);
-	insertToChildlist(x, y);
+	childInsert(x, y);
 	x->degree++;
 	y->mark = false;
 }
 
 template<typename T>
-std::vector<fibNode<T>*> FibHeap<T>::allMembers(fibNode<T>* current)
+std::vector<node<T>*> FibbonacciHeap<T>::allMembers(node<T>* current)
 {
-	std::vector<fibNode<T>*> result;
+	std::vector<node<T>*> result;
 
-	fibNode<T>* temp = current;
+	node<T>* temp = current;
 
 	if (current == nullptr) {
 		return result;
@@ -342,15 +338,15 @@ std::vector<fibNode<T>*> FibHeap<T>::allMembers(fibNode<T>* current)
 }
 
 template<typename T>
-fibNode<T>* FibHeap<T>::search(T value) {
-	fibNode<T>* temp = min;
-	fibNode<T>* result = nullptr;
+node<T>* FibbonacciHeap<T>::search(T value) {
+	node<T>* temp = min;
+	node<T>* result = nullptr;
 	result = recursiveSearch(value, temp, result);
 	return result;
 }
 
 template<typename T>
-fibNode<T>* FibHeap<T>::recursiveSearch(T value, fibNode<T>* current, fibNode<T>* result) {
+node<T>* FibbonacciHeap<T>::recursiveSearch(T value, node<T>* current, node<T>* result) {
 	for (auto item : allMembers(current)) {
 		if (item->key == value) {
 			result = item;
@@ -367,15 +363,15 @@ fibNode<T>* FibHeap<T>::recursiveSearch(T value, fibNode<T>* current, fibNode<T>
 }
 
 template<typename T>
-void FibHeap<T>::cut(fibNode<T>* x, fibNode<T>* y) {
+void FibbonacciHeap<T>::cut(node<T>* x, node<T>* y) {
 	deleteFromChildlist(y, x);
-	insertToRootlist(x);
+	rootInsert(x);
 	x->mark = false;
 }
 
 template<typename T>
-void FibHeap<T>::cascadingCut(fibNode<T>* y) {
-	fibNode<T>* z = y->parent;
+void FibbonacciHeap<T>::cascadingCut(node<T>* y) {
+	node<T>* z = y->parent;
 
 	if (z != nullptr) {
 		if (y->mark == false) {
@@ -389,14 +385,14 @@ void FibHeap<T>::cascadingCut(fibNode<T>* y) {
 }
 
 template<typename T>
-void FibHeap<T>::fibHeapInsert(fibNode<T>* x) {
+void FibbonacciHeap<T>::fibbonacciInsert(node<T>* x) {
 	if (min == nullptr) {
 		min = x;
 		x->left = x;
 		x->right = x;
 	}
 	else {
-		insertToRootlist(x);
+		rootInsert(x);
 
 		if (x->key < min->key) {
 			min = x;
@@ -407,7 +403,7 @@ void FibHeap<T>::fibHeapInsert(fibNode<T>* x) {
 }
 
 template<typename T>
-void FibHeap<T>::insertToRootlist(fibNode<T>* x) {
+void FibbonacciHeap<T>::rootInsert(node<T>* x) {
 	if (min->left == min) {
 		min->left = x;
 		min->right = x;
@@ -425,7 +421,7 @@ void FibHeap<T>::insertToRootlist(fibNode<T>* x) {
 }
 
 template<typename T>
-void FibHeap<T>::insertToChildlist(fibNode<T>* parent, fibNode<T>* toInsert) {
+void FibbonacciHeap<T>::childInsert(node<T>* parent, node<T>* toInsert) {
 	if (parent->child == nullptr) {
 		parent->child = toInsert;
 		toInsert->left = toInsert;
@@ -450,34 +446,26 @@ void FibHeap<T>::insertToChildlist(fibNode<T>* parent, fibNode<T>* toInsert) {
 
 int main()
 {
-	FibHeap<int> heap({ 5, 8, 2, 9, 0, 24, 3 });
-	FibHeap<int> heap2({ 27, 10, 2001 });
+	FibbonacciHeap<WorldMap> heap({ { "Italy","Rome" }, { "Spain","Madrid" }, { "Ukraine","Kyiv" }, { "Spain","Barcelona" }, { "Russia","Moscow" }, { "Italy","Neapol" } });
+	FibbonacciHeap<WorldMap> heap2({ { "Germany","Nurnburg" }, { "Sweden","Stokholm" }, { "USA","Washington DC" }, { "France","Paris" } });
 
-	FibHeap<int> heap3 = *heap.fibHeapUnion(&heap2);
+	FibbonacciHeap<WorldMap> heap3 = *heap.fibHeapUnion(&heap2);
 
 	std::cout << heap3.getWebGraphviz("g");
 
 	std::cout << "\n";
 
-	heap3.fibHeapExtractMin();
-	/*std::cout << heap3.fibHeapExtractMin()->key << " ";
-	std::cout << heap3.fibHeapExtractMin()->key << " ";
-	std::cout << heap3.fibHeapExtractMin()->key << " ";
-	std::cout << heap3.fibHeapExtractMin()->key;*/
+	std::cout << heap3.fibHeapExtractMin()->key << std::endl;
 
-	heap3.fibHeapDecreaseKey(9, 6);
+	std::cout << heap3.getWebGraphviz("g") << std::endl;
 
-	heap3.fibHeapDelete(6);
+	heap3.fibHeapDecreaseKey({ "Spain","Madrid" }, { "Spain", "Barcelona"});
+
+	std::cout << heap3.getWebGraphviz("Decreased Madrid to Barcelona") << std::endl;
+
+	heap3.fibHeapDelete({ "Sweden","Stokholm" });
 
 	std::cout << heap3.getWebGraphviz("g");
 
-	/*std::cout << heap3.search(9)->key << " ";
-	std::cout << heap3.search(8)->key << " ";
-	std::cout << heap3.search(2001)->key << " ";
-	std::cout << heap3.search(3)->key << " ";
-	std::cout << heap3.search(7)->key << " ";*/
-
 	return 0;
 }
-
-// 0 2 5 8 9 24 3 // 10 27 2001

@@ -1,14 +1,14 @@
-#include "BPlusTree.h"
+#include "BPTree.h"
 
 template<typename T, size_t degree>
-BPlusTree<T, degree>::BPlusTree() {
-	root = new BPlusTreeNode<T>();
+BPTree<T, degree>::BPTree() {
+	root = new BPTreeNode<T>();
 	root->isLeaf = true;
 }
 
 template<typename T, size_t degree>
-BPlusTree<T, degree>::BPlusTree(const std::initializer_list<T>& list) {
-	root = new BPlusTreeNode<T>();
+BPTree<T, degree>::BPTree(const std::initializer_list<T>& list) {
+	root = new BPTreeNode<T>();
 	root->isLeaf = true;
 
 	for (const auto& item : list) {
@@ -18,7 +18,7 @@ BPlusTree<T, degree>::BPlusTree(const std::initializer_list<T>& list) {
 
 
 template<typename T, size_t degree>
-std::pair<BPlusTreeNode<T>*, size_t> BPlusTree<T, degree>::search(BPlusTreeNode<T>* current, const T& key) {
+std::pair<BPTreeNode<T>*, size_t> BPTree<T, degree>::findNode(BPTreeNode<T>* current, const T& key) {
 	while (!current->isLeaf) {
 		size_t keysSize = current->keys.size();
 
@@ -47,14 +47,14 @@ std::pair<BPlusTreeNode<T>*, size_t> BPlusTree<T, degree>::search(BPlusTreeNode<
 }
 
 template<typename T, size_t degree>
-std::pair<BPlusTreeNode<T>*, size_t> BPlusTree<T, degree>::search(const T& key) {
-	return search(root, key);
+std::pair<BPTreeNode<T>*, size_t> BPTree<T, degree>::findNode(const T& key) {
+	return findNode(root, key);
 }
 
 template<typename T, size_t degree>
-void BPlusTree<T, degree>::splitChild(BPlusTreeNode<T>* parent, size_t childIndex) {
-	BPlusTreeNode<T>* newNode = new BPlusTreeNode<T>;
-	BPlusTreeNode<T>* toSplit = parent->children[childIndex];
+void BPTree<T, degree>::splitChildNode(BPTreeNode<T>* parent, size_t childIndex) {
+	BPTreeNode<T>* newNode = new BPTreeNode<T>;
+	BPTreeNode<T>* toSplit = parent->children[childIndex];
 
 	newNode->isLeaf = toSplit->isLeaf;
 
@@ -88,7 +88,7 @@ void BPlusTree<T, degree>::splitChild(BPlusTreeNode<T>* parent, size_t childInde
 }
 
 template<typename T, size_t degree>
-void BPlusTree<T, degree>::insertNonfull(BPlusTreeNode<T>* current, const T& key) {
+void BPTree<T, degree>::insertGeneral(BPTreeNode<T>* current, const T& key) {
 	size_t keysSize = current->keys.size();
 
 	if (keysSize == 0) {
@@ -107,8 +107,8 @@ void BPlusTree<T, degree>::insertNonfull(BPlusTreeNode<T>* current, const T& key
 }
 
 template<typename T, size_t degree>
-void BPlusTree<T, degree>::insert(const T& key) {
-	BPlusTreeNode<T>* current = root;
+void BPTree<T, degree>::insert(const T& key) {
+	BPTreeNode<T>* current = root;
 
 	while (!current->isLeaf) {
 		size_t keysSize = current->keys.size();
@@ -126,7 +126,7 @@ void BPlusTree<T, degree>::insert(const T& key) {
 		}
 	}
 
-	insertNonfull(current, key);
+	insertGeneral(current, key);
 
 	if (current->keys.size() == 2 * degree) {
 		recursiveSplit(current);
@@ -134,29 +134,29 @@ void BPlusTree<T, degree>::insert(const T& key) {
 }
 
 template<typename T, size_t degree>
-void BPlusTree<T, degree>::recursiveSplit(BPlusTreeNode<T>* current) {
+void BPTree<T, degree>::recursiveSplit(BPTreeNode<T>* current) {
 	if (current->keys.size() != 2 * degree)
 		return;
 
 	if (current == root) {
-		BPlusTreeNode<T>* newRoot = new BPlusTreeNode<T>();
+		BPTreeNode<T>* newRoot = new BPTreeNode<T>();
 		newRoot->children.push_back(current);
 
 		root = newRoot;
-		splitChild(newRoot, 0);
+		splitChildNode(newRoot, 0);
 
 		return;
 	}
 	auto [parent, index] = findParent(root, current);
 
-	splitChild(parent, index);
+	splitChildNode(parent, index);
 
 	recursiveSplit(parent);
 }
 
 template<typename T, size_t degree>
-void BPlusTree<T, degree>::remove(const T& key) {
-	auto [removeTarget, removeTargetIndex] = search(key);
+void BPTree<T, degree>::deleteData(const T& key) {
+	auto [removeTarget, removeTargetIndex] = findNode(key);
 	auto [targetParent, childIndex] = findParent(root, removeTarget);
 
 	if (removeTarget == nullptr)
@@ -172,26 +172,25 @@ void BPlusTree<T, degree>::remove(const T& key) {
 	}
 
 	if (removeTarget->keys.size() == degree - 2) {
-		auto leftSibling = findLeftSibling(removeTarget),
-			rightSibling = findRightSibling(removeTarget);
+		auto leftSibling_ = leftSibling(removeTarget),
+			rightSibling_ = rightSibling(removeTarget);
 
-		bool hasRightSibling = rightSibling != nullptr,
-			hasLeftSibling = leftSibling != nullptr;
+		bool hasRightSibling = rightSibling_ != nullptr,
+			hasLeftSibling = leftSibling_ != nullptr;
 
-		// borrow from right sibling
 		if (hasRightSibling && targetParent->children[childIndex + 1]->keys.size() >= degree) {
-			removeTarget->keys.push_back(std::move(rightSibling->keys[0]));
-			rightSibling->keys.erase(rightSibling->keys.begin());
+			removeTarget->keys.push_back(std::move(rightSibling_->keys[0]));
+			rightSibling_->keys.erase(rightSibling_->keys.begin());
 
-			auto [rightSiblingParent, rightSiblingIndex] = findParent(root, rightSibling);
+			auto [rightSiblingParent, rightSiblingIndex] = findParent(root, rightSibling_);
 
 			if (rightSiblingIndex - 1 >= 0)
-				rightSiblingParent->keys[rightSiblingIndex - 1] = rightSibling->keys[0];
+				rightSiblingParent->keys[rightSiblingIndex - 1] = rightSibling_->keys[0];
 		}
 		// borrow from left sibling
 		else if (hasLeftSibling && targetParent->children[childIndex - 1]->keys.size() >= degree) {
-			removeTarget->keys.insert(removeTarget->keys.begin(), std::move(leftSibling->keys[leftSibling->keys.size() - 1]));
-			leftSibling->keys.erase(leftSibling->keys.end() - 1);
+			removeTarget->keys.insert(removeTarget->keys.begin(), std::move(leftSibling_->keys[leftSibling_->keys.size() - 1]));
+			leftSibling_->keys.erase(leftSibling_->keys.end() - 1);
 
 			if (childIndex - 1 >= 0)
 				targetParent->keys[childIndex - 1] = removeTarget->keys[0];
@@ -199,25 +198,25 @@ void BPlusTree<T, degree>::remove(const T& key) {
 		// merging 
 		else {
 			if (hasLeftSibling) {
-				removeTarget = mergeLeafNodes(leftSibling, removeTarget);
+				removeTarget = mergeLeafs(leftSibling_, removeTarget);
 				targetParent->children.erase(targetParent->children.begin() + childIndex - 1);
 				targetParent->keys.erase(targetParent->keys.begin() + childIndex - 1);
 			}
 			else if (hasRightSibling) {
-				removeTarget = mergeLeafNodes(removeTarget, rightSibling);
+				removeTarget = mergeLeafs(removeTarget, rightSibling_);
 				targetParent->children.erase(targetParent->children.begin() + childIndex);
 				targetParent->keys.erase(targetParent->keys.begin() + childIndex);
 			}
 		}
 	}
 
-	removeFixup(targetParent, key);
+	deleteFixup(targetParent, key);
 }
 
 template<typename T, size_t degree>
-void BPlusTree<T, degree>::removeFixup(BPlusTreeNode<T>* current, const T& key) {
+void BPTree<T, degree>::deleteFixup(BPTreeNode<T>* current, const T& key) {
 	for (size_t i = 0, n = current->keys.size(); i < n; i++) {
-		current->keys[i] = findMinElement(current->children[i + 1]);
+		current->keys[i] = findMin(current->children[i + 1]);
 	}
 
 	if (current == root) {
@@ -231,51 +230,50 @@ void BPlusTree<T, degree>::removeFixup(BPlusTreeNode<T>* current, const T& key) 
 	auto [currentParent, childIndex] = findParent(root, current);
 
 	if (current->children.size() < degree) {
-		auto leftSibling = findLeftSibling(current),
-			rightSibling = findRightSibling(current);
+		auto leftSibling_ = leftSibling(current),
+			rightSibling_ = rightSibling(current);
 
-		bool hasRightSibling = rightSibling != nullptr,
-			hasLeftSibling = leftSibling != nullptr;
+		bool hasRightSibling = rightSibling_ != nullptr,
+			hasLeftSibling = leftSibling_ != nullptr;
 
 		// borrow from right sibling
 		if (hasRightSibling && currentParent->children[childIndex + 1]->keys.size() >= degree) {
-			current->keys.push_back(std::move(rightSibling->keys[0]));
-			rightSibling->keys.erase(rightSibling->keys.begin());
+			current->keys.push_back(std::move(rightSibling_->keys[0]));
+			rightSibling_->keys.erase(rightSibling_->keys.begin());
 
-			current->children.push_back(std::move(rightSibling->children[0]));
-			rightSibling->children.erase(rightSibling->children.begin());
+			current->children.push_back(std::move(rightSibling_->children[0]));
+			rightSibling_->children.erase(rightSibling_->children.begin());
 
 			if (childIndex >= 0)
-				current->keys[childIndex] = findMinElement(current->children[current->children.size() - 1]);
+				current->keys[childIndex] = findMin(current->children[current->children.size() - 1]);
 		}
-		// borrow from left sibling
 		else if (hasLeftSibling && currentParent->children[childIndex - 1]->keys.size() >= degree) {
-			current->keys.insert(current->keys.begin(), std::move(leftSibling->keys[leftSibling->keys.size() - 1]));
-			leftSibling->keys.erase(leftSibling->keys.end() - 1);
+			current->keys.insert(current->keys.begin(), std::move(leftSibling_->keys[leftSibling_->keys.size() - 1]));
+			leftSibling_->keys.erase(leftSibling_->keys.end() - 1);
 
-			current->children.insert(current->children.begin(), std::move(leftSibling->children[leftSibling->children.size() - 1]));
-			leftSibling->children.erase(leftSibling->children.end() - 1);
+			current->children.insert(current->children.begin(), std::move(leftSibling_->children[leftSibling_->children.size() - 1]));
+			leftSibling_->children.erase(leftSibling_->children.end() - 1);
 
 			if (childIndex - 1 >= 0)
-				current->keys[childIndex - 1] = findMinElement(current->children[1]);
+				current->keys[childIndex - 1] = findMin(current->children[1]);
 		}
 		// merging 
 		else {
 			if (hasLeftSibling) {
-				current = mergeInternalNodes(leftSibling, current);
+				current = mergeDividers(leftSibling_, current);
 			}
 			else if (hasRightSibling) {
-				current = mergeInternalNodes(current, rightSibling);
+				current = mergeDividers(current, rightSibling_);
 			}
 		}
 	}
 
-	removeFixup(currentParent, key);
+	deleteFixup(currentParent, key);
 }
 
 template<typename T, size_t degree>
-BPlusTreeNode<T>* BPlusTree<T, degree>::mergeLeafNodes(BPlusTreeNode<T>* left, BPlusTreeNode<T>* right) {
-	auto leftLeftSibling = findGlobalLeftSibling(left);
+BPTreeNode<T>* BPTree<T, degree>::mergeLeafs(BPTreeNode<T>* left, BPTreeNode<T>* right) {
+	auto leftLeftSibling = leftSiblingInTree(left);
 
 	if (leftLeftSibling)
 		leftLeftSibling->sibling = right;
@@ -290,13 +288,13 @@ BPlusTreeNode<T>* BPlusTree<T, degree>::mergeLeafNodes(BPlusTreeNode<T>* left, B
 }
 
 template<typename T, size_t degree>
-BPlusTreeNode<T>* BPlusTree<T, degree>::mergeInternalNodes(BPlusTreeNode<T>* left, BPlusTreeNode<T>* right) {
-	auto [parent, childLeftIndex] = findParent(root, left);
+BPTreeNode<T>* BPTree<T, degree>::mergeDividers(BPTreeNode<T>* left, BPTreeNode<T>* right) {
+	auto [parent, childIndexLeft] = findParent(root, left);
 
-	right->keys.insert(right->keys.begin(), findMinElement(parent->children[childLeftIndex + 1]));
-	parent->keys.erase(parent->keys.begin() + childLeftIndex);
+	right->keys.insert(right->keys.begin(), findMin(parent->children[childIndexLeft + 1]));
+	parent->keys.erase(parent->keys.begin() + childIndexLeft);
 
-	parent->children.erase(parent->children.begin() + childLeftIndex);
+	parent->children.erase(parent->children.begin() + childIndexLeft);
 
 	std::reverse(right->keys.begin(), right->keys.end());
 	std::move(left->keys.rbegin(), left->keys.rend(), std::back_inserter(right->keys));
@@ -312,7 +310,7 @@ BPlusTreeNode<T>* BPlusTree<T, degree>::mergeInternalNodes(BPlusTreeNode<T>* lef
 }
 
 template<typename T, size_t degree>
-T BPlusTree<T, degree>::findMinElement(BPlusTreeNode<T>* root) {
+T BPTree<T, degree>::findMin(BPTreeNode<T>* root) {
 	while (!root->isLeaf) {
 		root = root->children[0];
 	}
@@ -321,7 +319,7 @@ T BPlusTree<T, degree>::findMinElement(BPlusTreeNode<T>* root) {
 }
 
 template<typename T, size_t degree>
-BPlusTreeNode<T>* BPlusTree<T, degree>::findLeftSibling(BPlusTreeNode<T>* node) {
+BPTreeNode<T>* BPTree<T, degree>::leftSibling(BPTreeNode<T>* node) {
 	auto [parent, nodeIndex] = findParent(root, node);
 
 	if (!parent)
@@ -335,7 +333,7 @@ BPlusTreeNode<T>* BPlusTree<T, degree>::findLeftSibling(BPlusTreeNode<T>* node) 
 }
 
 template<typename T, size_t degree>
-BPlusTreeNode<T>* BPlusTree<T, degree>::findRightSibling(BPlusTreeNode<T>* node) {
+BPTreeNode<T>* BPTree<T, degree>::rightSibling(BPTreeNode<T>* node) {
 	auto [parent, nodeIndex] = findParent(root, node);
 
 	if (!parent)
@@ -349,13 +347,13 @@ BPlusTreeNode<T>* BPlusTree<T, degree>::findRightSibling(BPlusTreeNode<T>* node)
 }
 
 template<typename T, size_t degree>
-BPlusTreeNode<T>* BPlusTree<T, degree>::findGlobalLeftSibling(BPlusTreeNode<T>* current, BPlusTreeNode<T>* node) {
+BPTreeNode<T>* BPTree<T, degree>::leftSiblingInTree(BPTreeNode<T>* current, BPTreeNode<T>* node) {
 	if (current->isLeaf && current->sibling == node) {
 		return current;
 	}
 
 	for (const auto& kid : current->children) {
-		auto location = findGlobalLeftSibling(kid, node);
+		auto location = leftSiblingInTree(kid, node);
 		if (location != nullptr)
 			return location;
 	}
@@ -364,7 +362,7 @@ BPlusTreeNode<T>* BPlusTree<T, degree>::findGlobalLeftSibling(BPlusTreeNode<T>* 
 }
 
 template<typename T, size_t degree>
-BPlusTreeNode<T>* BPlusTree<T, degree>::findGlobalLeftSibling(BPlusTreeNode<T>* node) {
+BPTreeNode<T>* BPTree<T, degree>::leftSiblingInTree(BPTreeNode<T>* node) {
 	auto current = root;
 
 	while (!current->isLeaf) {
@@ -375,11 +373,11 @@ BPlusTreeNode<T>* BPlusTree<T, degree>::findGlobalLeftSibling(BPlusTreeNode<T>* 
 		return nullptr;
 	}
 
-	return findGlobalLeftSibling(root, node);
+	return leftSiblingInTree(root, node);
 }
 
 template<typename T, size_t degree>
-std::pair<BPlusTreeNode<T>*, size_t> BPlusTree<T, degree>::findParent(BPlusTreeNode<T>* current, BPlusTreeNode<T>* child) {
+std::pair<BPTreeNode<T>*, size_t> BPTree<T, degree>::findParent(BPTreeNode<T>* current, BPTreeNode<T>* child) {
 	for (size_t i = 0, n = current->children.size(); i < n; i++) {
 		if (current->children[i] == child)
 			return std::make_pair(current, i);
@@ -395,7 +393,7 @@ std::pair<BPlusTreeNode<T>*, size_t> BPlusTree<T, degree>::findParent(BPlusTreeN
 }
 
 template<typename T, size_t degree>
-void BPlusTree<T, degree>::getGraphInfo(BPlusTreeNode<T>* x, std::string& text) {
+void BPTree<T, degree>::getGraphInfo(BPTreeNode<T>* x, std::string& text) {
 	if (x == nullptr)
 		return;
 
@@ -420,7 +418,7 @@ void BPlusTree<T, degree>::getGraphInfo(BPlusTreeNode<T>* x, std::string& text) 
 }
 
 template<typename T, size_t degree>
-std::string BPlusTree<T, degree>::getWebGraphviz(std::string graphName) {
+std::string BPTree<T, degree>::getWebGraphviz(std::string graphName) {
 	std::string graphText = "digraph " + graphName + " {\n";
 
 	getGraphInfo(root, graphText);

@@ -151,8 +151,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Lab_5\WorldMap.h" />
-    <ClInclude Include="BPlusTree.h" />
-    <ClInclude Include="BPlusTree.hxx" />
+    <ClInclude Include="BPTree.h" />
+    <ClInclude Include="BPTree.hxx" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
