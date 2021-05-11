@@ -141,6 +141,9 @@
   <ItemGroup>
     <ClCompile Include="Lab_8.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="FibbonacciHeap.hxx" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
