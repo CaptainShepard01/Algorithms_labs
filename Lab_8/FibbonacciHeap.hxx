@@ -60,6 +60,7 @@ public:
 	void fibHeapDelete(T value);
 	std::string getWebGraphviz(std::string graphName);
 
+	node<T>* getMin();
 };
 
 template<typename T>
@@ -106,6 +107,11 @@ std::string FibbonacciHeap<T>::getWebGraphviz(std::string graphName) {
 	getGraphInfo(min, graphText);
 
 	return graphText += "}";
+}
+
+template<typename T>
+inline node<T>* FibbonacciHeap<T>::getMin(){
+	return min;
 }
 
 template<typename T>
@@ -265,7 +271,7 @@ void FibbonacciHeap<T>::deleteFromChildlist(node<T>* parent, node<T>* child) {
 
 template<typename T>
 void FibbonacciHeap<T>::consolidate() {
-	int size = (int)floor(log2(nodeCount)) + 1;
+	int size = (int)ceil(log2(nodeCount)) + 1;
 	std::vector<node<T>*> A(size, nullptr);
 
 	for (auto item : allMembers(min)) {
