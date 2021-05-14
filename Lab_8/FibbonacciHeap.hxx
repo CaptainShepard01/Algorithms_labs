@@ -53,6 +53,7 @@ public:
 	FibbonacciHeap();
 	FibbonacciHeap(const std::initializer_list<T>& list);
 	void fibbonacciInsert(T value);
+	node<T>* search(std::string value);
 	node<T>* findMin();
 	FibbonacciHeap<T>* fibHeapUnion(FibbonacciHeap<T>* anotherHeap);
 	node<T>* fibHeapExtractMin();
@@ -349,6 +350,13 @@ node<T>* FibbonacciHeap<T>::search(T value) {
 	node<T>* temp = min;
 	node<T>* result = nullptr;
 	result = recursiveSearch(value, temp, result);
+	return result;
+}
+
+template<typename T>
+node<T>* FibbonacciHeap<T>::search(std::string value) {
+	T newStruct({ "", value });
+	node<T>* result = search(newStruct);
 	return result;
 }
 

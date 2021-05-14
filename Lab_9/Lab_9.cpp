@@ -16,17 +16,15 @@
 #include "../Lab_5/WorldMap.h"
 #include"../Lab_8/FibbonacciHeap.hxx"
 
-#define ADDITIONAL_VERTEX_DATA = 0;
-
 template<typename T>
 struct vertex {
-	static int id;
+	static int number;
 
 	T data;
-	int number;
+	int id;
 
 	vertex(T data) :
-		number(id++),
+		id(number++),
 		data(data)
 	{};
 
@@ -34,7 +32,7 @@ struct vertex {
 };
 
 template<typename T>
-int vertex<T>::id = 0;
+int vertex<T>::number = 0;
 
 template<typename T>
 class Graph {
@@ -45,8 +43,6 @@ private:
 	std::vector<int> d;
 	std::vector<int> pi;
 
-	int minWeight;
-
 	void initializeSingleSource(int source);
 	void relax(int u, int v);
 	void relax(int from, int to, FibbonacciHeap<std::pair<int, int>>& heap);
@@ -56,8 +52,6 @@ private:
 	bool BellmanFord(int source);
 	void Dijkstra(int source);
 
-	void positiveEdges();
-	void originEdges();
 public:
 
 	Graph();
@@ -119,13 +113,36 @@ int main() {
 	testGraph.addEdge(4, 3, 6);*/
 
 
-	for (int i = 0; i < 7; ++i) {
+	for (int i = 4; i < 7; ++i) {
 		Graph<int> testGraph;
 		testGraph.generateRandomGraph(i);
-		std::cout << testGraph.getWebGraphviz() << "\n\n";
+		std::stringstream ss;
+		ss << i;
+		std::cout << testGraph.getWebGraphviz(std::string(ss.str())+"_Vertices") << "\n\n";
 		matrixPrint(testGraph.Johnson());
 		std::cout << "\n\n";
 	}
+
+	Graph<WorldMap> testGraph_1;
+	testGraph_1.addVertex({ "Russia","Mahachkala" });
+	testGraph_1.addVertex({ "China","Beijing" });
+	testGraph_1.addVertex({ "Madagaskar","Antananarivo" });
+	testGraph_1.addVertex({ "Columbia","Pictures" });
+	testGraph_1.addVertex({ "Spain", "Barcelona" });
+	testGraph_1.addVertex({ "Spain","Madrid" });
+
+	testGraph_1.addEdge(0, 1, -5);
+	testGraph_1.addEdge(1, 2, 45);
+	testGraph_1.addEdge(0, 3, 15);
+	testGraph_1.addEdge(2, 4, 3);
+	testGraph_1.addEdge(3, 5, -1);
+	testGraph_1.addEdge(1, 4, 4);
+	testGraph_1.addEdge(4, 5, -10);
+	testGraph_1.addEdge(1, 3, 1);
+
+	std::cout << testGraph_1.getWebGraphviz("With_WorldMap") << "\n\n";
+	matrixPrint(testGraph_1.Johnson());
+	std::cout << "\n\n";
 
 	/*Graph<int> testGraph;
 	for (int i = 0; i < 5; ++i) {
@@ -143,7 +160,16 @@ template<typename T>
 std::string vertex<T>::getText() {
 	std::stringstream result;
 
-	result << "Data: " << data << " ID: " << number;
+	result << "Data: " << data << " ID: " << id;
+
+	return result.str();
+}
+
+template<>
+std::string vertex<WorldMap>::getText() {
+	std::stringstream result;
+
+	result << "Country: " << data.country << " City: " << data.city << " ID: " << id;
 
 	return result.str();
 }
@@ -206,15 +232,9 @@ template<typename T>
 bool Graph<T>::BellmanFord(int source) {
 	initializeSingleSource(source);
 
-	minWeight = INT_MAX;
-
 	for (int i = 0; i < vertices.size() - 1; ++i) {
 		for (int from = 0; from < adjacencyList.size(); ++from) {
 			for (int to = 0; to < adjacencyList[from].size(); ++to) {
-				//Updating minimal weight to adjust weights for Dijkstra algorithm
-				if (adjacencyList[from][to].second < minWeight) {
-					minWeight = adjacencyList[from][to].second;
-				}
 				relax(from, adjacencyList[from][to].first);
 			}
 		}
@@ -260,30 +280,6 @@ void Graph<T>::Dijkstra(int source) {
 }
 
 template<typename T>
-void Graph<T>::positiveEdges() {
-	if (minWeight >= 0)
-		return;
-
-	for (int from = 0; from < adjacencyList.size(); ++from) {
-		for (int to = 0; to < adjacencyList[from].size(); ++to) {
-			adjacencyList[from][to].second += minWeight;
-		}
-	}
-}
-
-template<typename T>
-void Graph<T>::originEdges() {
-	if (minWeight >= 0)
-		return;
-
-	for (int from = 0; from < adjacencyList.size(); ++from) {
-		for (int to = 0; to < adjacencyList[from].size(); ++to) {
-			adjacencyList[from][to].second -= minWeight;
-		}
-	}
-}
-
-template<typename T>
 Graph<T>::Graph() {
 
 }
@@ -314,6 +310,50 @@ void Graph<T>::generateRandomGraph(const int& numberOfVertices) {
 			}
 		}
 	}
+}
+
+template<>
+std::vector<std::vector<int>> Graph<WorldMap>::Johnson() {
+	std::vector<std::vector<int>> result(vertices.size(), std::vector<int>(vertices.size()));
+
+	Graph<WorldMap> expanded = *this;
+
+	expanded.addVertex({"", ""});
+
+	for (int i = 0; i < expanded.vertices.size() - 1; ++i) {
+		expanded.addEdge(expanded.vertices.size() - 1, i, 0);
+	}
+
+	if (expanded.BellmanFord(expanded.vertices.size() - 1) == false) {
+		std::cout << "\nThere is a negative weight cycle in this Graph!\n\n";
+		return std::vector<std::vector<int>>();
+	}
+	else {
+		for (int from = 0; from < expanded.adjacencyList.size(); ++from) {
+			for (int to = 0; to < expanded.adjacencyList[from].size(); ++to) {
+				expanded.adjacencyList[from][to].second =
+					expanded.adjacencyList[from][to].second +
+					expanded.d[from] -
+					expanded.d[expanded.adjacencyList[from][to].first];
+			}
+		}
+		expanded.adjacencyList.pop_back();
+		adjacencyList = expanded.adjacencyList;
+
+		for (int i = 0; i < vertices.size(); ++i) {
+			Dijkstra(i);
+			for (int j = 0; j < vertices.size(); ++j) {
+				if (d[j] == INT_MAX || expanded.d[j] == INT_MAX || expanded.d[i] == INT_MAX) {
+					result[i][j] = INT_MAX;
+				}
+				else {
+					result[i][j] = d[j] + expanded.d[j] - expanded.d[i];
+				}
+			}
+		}
+	}
+
+	return result;
 }
 
 template<typename T>
